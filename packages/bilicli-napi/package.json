@@ -1,12 +1,12 @@
 {
   "name": "@natmri/bilicli-napi",
-  "version": "0.0.8",
+  "version": "0.0.1",
   "description": "Node.js binding for Rust",
   "license": "LGPL-3.0-or-later",
   "main": "index.js",
   "types": "index.d.ts",
   "engines": {
-    "node": ">= 10"
+    "node": ">=14"
   },
   "napi": {
     "name": "bilicli-napi",

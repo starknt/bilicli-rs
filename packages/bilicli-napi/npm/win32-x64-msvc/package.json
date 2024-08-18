@@ -1,0 +1,18 @@
+{
+  "name": "@natmri/bilicli-napi-win32-x64-msvc",
+  "version": "0.0.8",
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "license": "LGPL-3.0-or-later",
+  "main": "bilicli-napi.win32-x64-msvc.node",
+  "files": [
+    "bilicli-napi.win32-x64-msvc.node"
+  ],
+  "engines": {
+    "node": ">= 10"
+  }
+}

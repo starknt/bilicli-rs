@@ -8,7 +8,6 @@ crate-type = ["cdylib", "lib"]
 
 [[bin]]
 name = "bilicli-napi"
-path = "src/main.rs"
 features = []
 
 [features]
