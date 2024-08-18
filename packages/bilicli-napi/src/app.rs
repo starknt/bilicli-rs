@@ -4,9 +4,8 @@ use crate::{
     api::{self},
     ui::{footer::Footer, header::Header, tabs::Tabs, AppState, InputMode},
 };
-use crossterm::event;
 use ratatui::{
-    crossterm::event::{Event, KeyCode, KeyEventKind},
+    crossterm::event::{self, Event, KeyCode, KeyEventKind},
     prelude::*,
     style::palette::tailwind,
     widgets::{Block, Borders, List, ListItem, Padding, Paragraph, Wrap},

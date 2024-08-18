@@ -15,15 +15,13 @@ napi = []
 
 [dependencies]
 ratatui = { version = "0.28" }
-crossterm = { version = "0.28", features = ["event-stream"] }
 tui-textarea = "*"
 unicode-width = "0.1.13"
 chrono = "0.4.38"
 strum = "0.26.3"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
 reqwest = { version = "0.12", features = ["json", "blocking"] }
-napi = { version = "2.16.9", features = ["tokio_rt", "napi4"] }
+napi = { version = "2.16.9" }
 napi-derive = "2.16.11"
 
 [build-dependencies]
