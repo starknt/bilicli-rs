@@ -19,7 +19,7 @@
     "bin"
   ],
   "engines": {
-    "node": ">=14"
+    "node": ">=20"
   },
   "scripts": {
     "build": "unbuild",
@@ -27,6 +27,10 @@
   },
   "dependencies": {
     "@natmri/bilicli-napi": "workspace:*",
-    "cac": "^6.7.14"
+    "cac": "^6.7.14",
+    "blive-message-listener": "^0.4.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.4.0"
   }
 }

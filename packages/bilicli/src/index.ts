@@ -1,16 +1,18 @@
 #!/bin/env node
 
 import { cac } from 'cac'
-import { Cli } from '@natmri/bilicli-napi'
 import { version } from '../package.json'
+import { App } from './app'
 
 const cli = cac('bilicli')
 
 cli.command('<room_id>', 'Open live console')
   .action(async (roomId: string) => {
-    const cli = new Cli(~~roomId)
+    const app = new App(~~roomId)
 
-    cli.run()
+    app.run()
+
+    process.exit(0)
   })
 
 cli.help()

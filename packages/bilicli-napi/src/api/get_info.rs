@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Clone, Deserialize, Debug)]
 pub struct RoomInfo {
     pub uid: u64,
     pub room_id: u32,
@@ -28,27 +28,21 @@ pub struct GetRoomInfoResponse {
     pub data: RoomInfo,
 }
 
-pub fn get_room_info(room_id: u32) -> Result<RoomInfo, Box<dyn std::error::Error>> {
-    let response = reqwest::blocking::get(format!(
+pub async fn get_room_info(room_id: u32) -> Result<RoomInfo, Box<dyn std::error::Error>> {
+    let response = reqwest::get(format!(
         "https://api.live.bilibili.com/room/v1/Room/get_info?room_id={}",
         room_id
-    ));
+    ))
+    .await?;
 
-    if let Ok(response) = response {
-        let response = response.json::<GetRoomInfoResponse>()?;
+    let response = response.json::<GetRoomInfoResponse>().await?;
 
-        if response.code != 0 {
-            Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                response.message,
-            )))?
-        }
-
-        Ok(response.data)
-    } else {
+    if response.code != 0 {
         Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
-            "Failed to get room info",
-        )))
+            response.message,
+        )))?
     }
+
+    Ok(response.data)
 }

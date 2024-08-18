@@ -1,8 +1,12 @@
+use napi_derive::napi;
+
+#[cfg(feature = "platform-napi")]
 pub mod footer;
 pub mod header;
 pub mod tabs;
 
-#[derive(Default, Clone, Copy, PartialEq, Eq)]
+#[napi]
+#[derive(Default, PartialEq, Eq)]
 pub enum AppState {
     #[default]
     Running,
@@ -10,7 +14,7 @@ pub enum AppState {
     Quit,
 }
 
-#[derive(Default, PartialEq, Eq, Clone)]
+#[derive(Default, PartialEq, Eq, Clone, Copy)]
 pub enum InputMode {
     #[default]
     Normal,

@@ -1,66 +1,77 @@
 #![allow(clippy::new_without_default)]
 
+use std::time::Duration;
+
 use crate::{
-    api::{self},
+    api::RoomInfo,
     ui::{footer::Footer, header::Header, tabs::Tabs, AppState, InputMode},
 };
+use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind};
+use futures::StreamExt;
 use ratatui::{
-    crossterm::event::{self, Event, KeyCode, KeyEventKind},
     prelude::*,
     style::palette::tailwind,
     widgets::{Block, Borders, List, ListItem, Padding, Paragraph, Wrap},
 };
 use tui_textarea::TextArea;
-use unicode_width::UnicodeWidthStr;
 
-const MAX_INPUT_LENGTH: usize = 40;
+pub const MAX_INPUT_LENGTH: usize = 40;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Clone)]
 pub struct App {
-    input_mode: InputMode,
-    messages: Vec<String>,
-    state: AppState,
+    pub input_mode: InputMode,
+    pub state: AppState,
     header: Header,
     footer: Footer,
     tabs: Tabs,
-    textarea: TextArea<'static>,
+    pub textarea: TextArea<'static>,
+    pub messages: Vec<String>,
 }
 
-impl App {
-    pub fn new(room_id: u32) -> Self {
-        let info = api::get_room_info(room_id).unwrap();
+unsafe impl Send for App {}
 
+impl App {
+    pub fn new(_: u32) -> Self {
         Self {
             textarea: TextArea::default(),
             input_mode: InputMode::Normal,
-            messages: vec![],
             state: AppState::Running,
-            header: Header::new(info.clone()),
-            footer: Footer::new(info.clone()),
+            header: Header::default(),
+            footer: Footer::default(),
             tabs: Tabs::default(),
+            messages: vec![],
         }
     }
 
-    pub fn run(&mut self, terminal: &mut Terminal<impl Backend>) -> Result<()> {
+    const FRAMES_PER_SECOND: f32 = 60.0;
+
+    pub async fn run(&mut self, terminal: &mut Terminal<impl Backend>) -> Result<()> {
+        let mut interval =
+            tokio::time::interval(Duration::from_secs_f32(1.0 / Self::FRAMES_PER_SECOND));
+        let mut events = EventStream::new();
+
         while self.state != AppState::Quit {
-            self.draw(terminal)?;
-            self.handle_events()?;
+            tokio::select! {
+                _ = interval.tick() => self.draw(terminal)?,
+                Some(Ok(event)) = events.next() =>  self.handle_events(&event)?,
+            }
         }
 
         Ok(())
     }
 
-    fn draw(&mut self, terminal: &mut Terminal<impl Backend>) -> Result<()> {
+    fn draw(&mut self, terminal: &mut Terminal<impl Backend>) -> crate::app::Result<()> {
         terminal.draw(|f| {
             f.render_widget(self, f.area());
         })?;
+
         Ok(())
     }
 
-    fn handle_events(&mut self) -> Result<()> {
-        if let Event::Key(key) = event::read()? {
+    fn handle_events(&mut self, event: &Event) -> crate::app::Result<()> {
+        if let Event::Key(key) = event {
             match self.input_mode {
                 InputMode::Normal => {
                     if key.kind == KeyEventKind::Press {
@@ -95,17 +106,17 @@ impl App {
                 }
                 InputMode::Editing => match key.code {
                     KeyCode::Enter => {
-                        if self.textarea.lines()[0].width() > 0 {
+                        if !self.textarea.lines()[0].is_empty() {
                             self.messages.push(self.textarea.yank_text());
-                            self.textarea.delete_str(self.textarea.lines()[0].width());
+                            self.textarea.delete_str(self.textarea.lines()[0].len());
                         }
                     }
                     KeyCode::Esc => {
                         self.input_mode = InputMode::Normal;
                     }
                     _ => {
-                        if self.textarea.input(key)
-                            && self.textarea.lines()[0].width() > MAX_INPUT_LENGTH
+                        if self.textarea.input(*key)
+                            && self.textarea.lines()[0].len() > MAX_INPUT_LENGTH
                         {
                             self.textarea.delete_char();
                         }
@@ -114,6 +125,11 @@ impl App {
             }
         }
         Ok(())
+    }
+
+    pub fn update_info(&mut self, info: RoomInfo) {
+        self.header.update_info(info.clone());
+        self.footer.update_info(info.clone());
     }
 
     pub fn scroll_up(&mut self) {
@@ -134,8 +150,24 @@ impl App {
         self.tabs.state.select_previous();
     }
 
-    fn quit(&mut self) {
-        if self.state.eq(&AppState::Quitting) {
+    pub fn send_attention_change(&mut self, attention: u32) {
+        self.footer.update_attention(attention);
+    }
+
+    pub fn send_watcher_change(&mut self, watched: String) {
+        self.footer.update_watcher(watched);
+    }
+
+    pub fn send_live_change(&mut self, live: bool) {
+        self.footer.update_live(live);
+    }
+
+    pub fn quit(&mut self) {
+        if self.state == AppState::Quit {
+            return;
+        }
+
+        if self.state == AppState::Quitting {
             self.state = AppState::Quit;
             return;
         }
@@ -220,7 +252,7 @@ impl App {
         self.textarea
             .set_style(Style::default().fg(Color::LightCyan));
         let style = {
-            if self.textarea.lines()[0].width() > 0 {
+            if !self.textarea.lines()[0].is_empty() {
                 Style::default()
                     .fg(Color::Green)
                     .bg(Color::default())
@@ -239,7 +271,7 @@ impl App {
                 .padding(Padding::left(1))
                 .title(format!(
                     " {} / {} ",
-                    self.textarea.lines()[0].width(),
+                    self.textarea.lines()[0].len(),
                     MAX_INPUT_LENGTH
                 ))
                 .title_alignment(Alignment::Center),

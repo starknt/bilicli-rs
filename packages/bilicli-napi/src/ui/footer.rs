@@ -9,7 +9,7 @@ use crate::api::RoomInfo;
 #[derive(Clone)]
 pub struct Footer {
     pub attention: u32,
-    pub watchers: u32,
+    pub watchers: String,
     pub is_live: bool,
     pub start_time: NaiveDateTime,
 }
@@ -17,10 +17,10 @@ pub struct Footer {
 impl Footer {
     pub fn new(info: RoomInfo) -> Self {
         let start_time =
-            NaiveDateTime::parse_from_str(&info.live_time, "%Y-%m-%d %H:%M:%S").unwrap();
+            NaiveDateTime::parse_from_str(&info.live_time, "%Y-%m-%d %H:%M:%S").unwrap_or_default();
         Self {
             attention: info.attention,
-            watchers: 0,
+            watchers: "1".to_string(),
             is_live: info.live_status == 1,
             start_time,
         }
@@ -30,7 +30,30 @@ impl Footer {
         self.attention = info.attention;
         self.is_live = info.live_status == 1;
         self.start_time =
-            NaiveDateTime::parse_from_str(&info.live_time, "%Y-%m-%d %H:%M:%S").unwrap();
+            NaiveDateTime::parse_from_str(&info.live_time, "%Y-%m-%d %H:%M:%S").unwrap_or_default();
+    }
+
+    pub fn update_attention(&mut self, attention: u32) {
+        self.attention = attention;
+    }
+
+    pub fn update_watcher(&mut self, watcher: String) {
+        self.watchers = watcher;
+    }
+
+    pub fn update_live(&mut self, live: bool) {
+        self.is_live = live;
+    }
+}
+
+impl Default for Footer {
+    fn default() -> Self {
+        Self {
+            attention: 0,
+            watchers: "1".to_string(),
+            is_live: false,
+            start_time: NaiveDateTime::default(),
+        }
     }
 }
 
@@ -42,8 +65,8 @@ impl Widget for &Footer {
 
         let [info_area, watcher_area, attention_area] = Layout::horizontal([
             Constraint::Fill(1),
-            Constraint::Length(12),
-            Constraint::Length(12),
+            Constraint::Length(16),
+            Constraint::Length(16),
         ])
         .flex(layout::Flex::SpaceBetween)
         .areas(right);
@@ -79,12 +102,14 @@ impl Widget for &Footer {
             )
             .render(info_area, buf);
         } else {
-            Paragraph::new(Line::from(
+            Paragraph::new(Line::from(vec![
                 "⚫️"
                     .to_string()
                     .fg(Color::LightGreen)
                     .add_modifier(Modifier::BOLD),
-            ))
+                Span::from("  "),
+                Span::from("未开播").fg(Color::Red),
+            ]))
             .block(
                 Block::bordered()
                     .border_type(ratatui::widgets::BorderType::Rounded)

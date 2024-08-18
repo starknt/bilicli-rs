@@ -16,5 +16,10 @@
   "devDependencies": {
     "typescript": "^5.4.5",
     "unbuild": "^2.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "tiny-bilibili-ws": "npm:tiny-bilibili-ws@1.0.0-beta.4"
+    }
   }
 }
