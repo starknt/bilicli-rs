@@ -7,7 +7,7 @@
   "cpu": [
     "arm"
   ],
-  "license": "LGPL-3.0-or-later",
+  "license": "MIT",
   "main": "bilicli-napi.linux-arm-gnueabihf.node",
   "files": [
     "bilicli-napi.linux-arm-gnueabihf.node"

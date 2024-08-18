@@ -2,7 +2,7 @@
   "name": "@natmri/bilicli-napi",
   "version": "0.0.1",
   "description": "Node.js binding for Rust",
-  "license": "LGPL-3.0-or-later",
+  "license": "MIT",
   "main": "index.js",
   "types": "index.d.ts",
   "engines": {

@@ -7,7 +7,7 @@
   "cpu": [
     "ia32"
   ],
-  "license": "LGPL-3.0-or-later",
+  "license": "MIT",
   "main": "bilicli-napi.win32-ia32-msvc.node",
   "files": [
     "bilicli-napi.win32-ia32-msvc.node"
