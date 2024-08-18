@@ -1,0 +1,5 @@
+{
+  "rust-analyzer.linkedProjects": [
+    "./packages/bilicli-napi/Cargo.toml"
+  ],
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@starknt/repo",
+  "private": true,
+  "packageManager": "pnpm@9.0.4",
+  "author": {
+    "name": "starknt",
+    "url": "https://github.com/starknt"
+  },
+  "sideEffect": false,
+  "engines": {
+    "node": ">=14"
+  },
+  "scripts": {
+    "build": "pnpm -r build"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
