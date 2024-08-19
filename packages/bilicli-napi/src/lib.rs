@@ -54,7 +54,7 @@ pub struct CliState {
     pub state: AppState,
     pub room_id: u32,
     pub attention: u32,
-    pub watchers: String,
+    pub watchers: u32,
     pub is_live: bool,
     pub start_time: NaiveDateTime,
     pub area_name: String,
@@ -154,7 +154,7 @@ impl Cli {
     /// # Safety
     /// This function is marked as unsafe because it requires exclusive access to the state.
     #[napi]
-    pub async unsafe fn send_watcher_change(&mut self, watcher: String) {
+    pub async unsafe fn send_watcher_change(&mut self, watcher: u32) {
         let mut state = self.state.lock().await;
         state.update_watcher(watcher);
     }
@@ -194,14 +194,14 @@ impl CliState {
         self.is_live = info.live_status == 1;
         self.start_time =
             NaiveDateTime::parse_from_str(&info.live_time, "%Y-%m-%d %H:%M:%S").unwrap_or_default();
-        self.watchers = info.online.to_string();
+        self.watchers = info.online;
     }
 
     pub fn update_attention(&mut self, attention: u32) {
         self.attention = attention;
     }
 
-    pub fn update_watcher(&mut self, watcher: String) {
+    pub fn update_watcher(&mut self, watcher: u32) {
         self.watchers = watcher;
     }
 

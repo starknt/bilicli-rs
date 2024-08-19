@@ -53,6 +53,6 @@ export class App {
   }
 
   private handleWatchedChange(body: WatchedChangeMsg) {
-    this.cli.sendWatcherChange(body.text_small)
+    this.cli.sendWatcherChange(body.num)
   }
 }

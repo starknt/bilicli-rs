@@ -3,6 +3,7 @@ use std::{fmt, str::FromStr};
 use chrono::{DateTime, Local, TimeZone};
 use ratatui::{
     prelude::*,
+    style::palette::tailwind,
     widgets::{Block, ListState, Padding, Paragraph, Scrollbar, ScrollbarState},
 };
 
@@ -104,6 +105,10 @@ impl StatefulWidget for &mut Tab {
 }
 
 impl Tab {
+    fn should_scroll(&mut self, content_length: usize, area: &Rect) -> bool {
+        self.scroll() + area.height - 2 < content_length as u16
+    }
+
     fn render_all_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut CliState) {
         let text: Vec<Line<'static>> = state
             .messages
@@ -114,8 +119,7 @@ impl Tab {
 
         self.set_state_content_length(text.len());
 
-        let scroll = self.scroll();
-        if scroll + area.height < text.len() as u16 {
+        if self.should_scroll(text.len(), &area) {
             self.scroll_down();
         }
 
@@ -145,8 +149,7 @@ impl Tab {
 
         self.set_state_content_length(text.len());
 
-        let scroll = self.scroll();
-        if scroll + area.height < text.len() as u16 {
+        if self.should_scroll(text.len(), &area) {
             self.scroll_down();
         }
 
@@ -176,8 +179,7 @@ impl Tab {
 
         self.set_state_content_length(text.len());
 
-        let scroll = self.scroll();
-        if scroll + area.height < text.len() as u16 {
+        if self.should_scroll(text.len(), &area) {
             self.scroll_down();
         }
 
@@ -207,8 +209,7 @@ impl Tab {
 
         self.set_state_content_length(text.len());
 
-        let scroll = self.scroll();
-        if scroll + area.height < text.len() as u16 {
+        if self.should_scroll(text.len(), &area) {
             self.scroll_down();
         }
 
@@ -238,8 +239,7 @@ impl Tab {
 
         self.set_state_content_length(text.len());
 
-        let scroll = self.scroll();
-        if scroll + area.height < text.len() as u16 {
+        if self.should_scroll(text.len(), &area) {
             self.scroll_down();
         }
 
@@ -269,8 +269,7 @@ impl Tab {
 
         self.set_state_content_length(text.len());
 
-        let scroll = self.scroll();
-        if scroll + area.height < text.len() as u16 {
+        if self.should_scroll(text.len(), &area) {
             self.scroll_down();
         }
 
@@ -535,11 +534,12 @@ impl Tab {
                     },
                     Span::raw(": "),
                     Span::from("赠送了"),
-                    Span::from(format!("(¥ {})", msg.price / 1000)),
                     Span::raw(" "),
                     Span::from(msg.gift_name),
                     Span::raw(" "),
-                    Span::from(format!("*{}", msg.amount)),
+                    Span::from(format!("*{:2}!", msg.amount)),
+                    Span::raw(" "),
+                    Span::from(format!("(¥{})", msg.price / 1000)),
                     {
                         if let Some(master) = msg.send_master {
                             Span::from(format!(" 给 {}", master.uname))
@@ -626,8 +626,10 @@ impl Tab {
                     },
                     Span::raw(": "),
                     Span::from(format!("(¥ {})", msg.price / 1000)),
+                    Span::from(format!("在你的直播间购买了{}", msg.gift_name))
+                        .fg(tailwind::GREEN.c400),
                     Span::raw(" "),
-                    Span::from(msg.gift_name),
+                    Span::from(format!("(¥ {})", msg.price / 1000)),
                 ])
             }
             MsgType::UserAction => {

@@ -37,7 +37,7 @@ export declare class Cli {
    * # Safety
    * This function is marked as unsafe because it requires exclusive access to the state.
    */
-  sendWatcherChange(watcher: string): Promise<void>
+  sendWatcherChange(watcher: number): Promise<void>
   /**
    * # Safety
    * This function is marked as unsafe because it requires exclusive access to the state.

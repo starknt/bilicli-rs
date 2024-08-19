@@ -180,9 +180,9 @@ impl StatefulWidget for &mut Footer {
         }
 
         Paragraph::new(Line::from(
-            format!("👀 {}", state.watchers)
+            format!("👀 {}", small_num_text(state.watchers))
                 .fg(Color::LightGreen)
-                .add_modifier(Modifier::BOLD),
+                .bold(),
         ))
         .block(
             Block::bordered()
@@ -192,9 +192,9 @@ impl StatefulWidget for &mut Footer {
         .render(watcher_area, buf);
 
         Paragraph::new(Line::from(
-            format!("🔥 {}", state.attention)
+            format!("🔥 {}", small_num_text(state.attention))
                 .fg(Color::LightGreen)
-                .add_modifier(Modifier::BOLD),
+                .bold(),
         ))
         .block(
             Block::bordered()
@@ -246,5 +246,13 @@ fn format_duration(start_time: NaiveDateTime) -> String {
         format!("{}:{}", format_minutes, format_seconds).to_string()
     } else {
         format!("{}:{}:{}", format_hours, format_minutes, format_seconds).to_string()
+    }
+}
+
+fn small_num_text(num: u32) -> String {
+    if num > 10000 {
+        format!("{:.1} 万", num as f32 / 10000.0).to_string()
+    } else {
+        format!("{}", num).to_string()
     }
 }
