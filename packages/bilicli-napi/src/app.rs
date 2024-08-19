@@ -43,7 +43,7 @@ impl App {
         }
     }
 
-    const FRAMES_PER_SECOND: f32 = 60.0;
+    const FRAMES_PER_SECOND: f32 = 120.0;
 
     pub async fn run(
         &mut self,

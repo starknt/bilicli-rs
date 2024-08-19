@@ -7,6 +7,7 @@ use strum::{Display, EnumIter, FromRepr};
 
 pub mod footer;
 pub mod header;
+pub mod hyper_link;
 pub mod tabs;
 
 #[cfg(feature = "platform-napi")]

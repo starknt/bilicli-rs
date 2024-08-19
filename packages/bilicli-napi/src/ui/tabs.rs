@@ -108,6 +108,7 @@ impl Tab {
         let text: Vec<Line<'static>> = state
             .messages
             .iter()
+            .filter(|(t, _)| *t != MsgType::UserAction)
             .map(|(t, b)| Self::render_msg(*t, b.clone(), true))
             .collect();
 
@@ -304,7 +305,9 @@ impl Tab {
                         .fg(Color::from_hsl(0.0, 0.0, 40.0)),
                     {
                         if render_type {
-                            Span::from(format!(" [{}] ", t)).fg(Color::Yellow)
+                            Span::from(format!(" [{}] ", t))
+                                .fg(Color::LightYellow)
+                                .not_bold()
                         } else {
                             Span::raw(" ")
                         }

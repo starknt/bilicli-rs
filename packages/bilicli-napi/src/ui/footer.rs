@@ -1,43 +1,17 @@
+use std::str::FromStr;
+
 use chrono::prelude::*;
 use ratatui::{
     prelude::*,
-    widgets::{Block, Padding, Paragraph},
+    widgets::{block::Title, Block, Padding, Paragraph},
 };
 
 use crate::CliState;
 
+use super::{MsgType, UserActionMsg};
+
 #[derive(Clone, Debug, Default)]
 pub struct Footer;
-
-// impl FooterState {
-//     pub fn new(attention: u32, watchers: String, is_live: bool, start_time: NaiveDateTime) -> Self {
-//         Self {
-//             attention,
-//             watchers,
-//             is_live,
-//             start_time,
-//         }
-//     }
-
-//     pub fn update_info(&mut self, info: RoomInfo) {
-//         self.attention = info.attention;
-//         self.is_live = info.live_status == 1;
-//         self.start_time =
-//             NaiveDateTime::parse_from_str(&info.live_time, "%Y-%m-%d %H:%M:%S").unwrap_or_default();
-//     }
-
-//     pub fn update_attention(&mut self, attention: u32) {
-//         self.attention = attention;
-//     }
-
-//     pub fn update_watcher(&mut self, watcher: String) {
-//         self.watchers = watcher;
-//     }
-
-//     pub fn update_live(&mut self, live: bool) {
-//         self.is_live = live;
-//     }
-// }
 
 impl StatefulWidget for &mut Footer {
     type State = CliState;
@@ -55,15 +29,118 @@ impl StatefulWidget for &mut Footer {
         .flex(layout::Flex::SpaceBetween)
         .areas(right);
 
-        Paragraph::new(Line::from("按 Enter 输入弹幕信息, Esc 取消输入").fg(Color::LightGreen))
+        let enter = state
+            .messages
+            .iter()
+            .filter(|(t, _)| *t == MsgType::UserAction)
+            .filter(|(_, msg)| {
+                let msg = serde_json::from_str::<UserActionMsg>(msg).unwrap();
+                msg.action.as_str() == "enter"
+            })
+            .last();
+
+        let text = {
+            let user_colors: [&str; 4] = ["#967E76", "#FF7C28", "#E17AFF", "#00D1F1"];
+
+            if let Some(enter) = enter {
+                let (_, msg) = enter;
+                let msg = serde_json::from_str::<UserActionMsg>(msg).unwrap();
+
+                Line::from(vec![
+                    {
+                        if let Some(ref badge) = msg.user.badge {
+                            let color = {
+                                if let Some(ref anchor) = badge.anchor {
+                                    if let Some(is_same_room) = anchor.is_same_room {
+                                        if is_same_room {
+                                            Color::from_str(&badge.color).unwrap()
+                                        } else {
+                                            Color::from_str("#666666").unwrap()
+                                        }
+                                    } else {
+                                        Color::from_str("#666666").unwrap()
+                                    }
+                                } else {
+                                    Color::from_str("#666666").unwrap()
+                                }
+                            };
+
+                            Span::from(format!(" {} ", badge.name)).bg(color)
+                        } else {
+                            Span::raw("")
+                        }
+                    },
+                    {
+                        if let Some(ref badge) = msg.user.badge {
+                            let color = {
+                                if let Some(ref anchor) = badge.anchor {
+                                    if let Some(is_same_room) = anchor.is_same_room {
+                                        if is_same_room {
+                                            Color::from_str(&badge.color).unwrap()
+                                        } else {
+                                            Color::from_str("#666666").unwrap()
+                                        }
+                                    } else {
+                                        Color::from_str("#666666").unwrap()
+                                    }
+                                } else {
+                                    Color::from_str("#666666").unwrap()
+                                }
+                            };
+
+                            Span::from(format!(" {} ", badge.level))
+                                .fg(color)
+                                .bg(Color::White)
+                        } else {
+                            Span::raw("")
+                        }
+                    },
+                    Span::raw(" "),
+                    {
+                        let color = {
+                            if let Some(identity) = msg.user.identity {
+                                let index = identity.guard_level as usize % user_colors.len();
+                                Color::from_str(user_colors[index]).unwrap()
+                            } else {
+                                Color::from_str(user_colors[0]).unwrap()
+                            }
+                        };
+
+                        Span::from(msg.user.uname).bold().fg(color)
+                    },
+                    Span::raw(": "),
+                    {
+                        match msg.action.as_str() {
+                            "enter" => Span::from("进入"),
+                            "follow" => Span::from("关注"),
+                            "share" => Span::from("分享"),
+                            "like" => Span::from("点赞"),
+                            _ => Span::raw(""),
+                        }
+                    },
+                    Span::from("直播间"),
+                ])
+            } else {
+                Line::from("按 Enter 输入弹幕信息, Esc 取消输入")
+            }
+        };
+
+        Paragraph::new(text)
             .block(
                 Block::bordered()
                     .border_type(ratatui::widgets::BorderType::Rounded)
                     .padding(Padding::horizontal(1))
-                    .title("提示")
-                    .title_style(Style::default().fg(Color::Red))
-                    .title_alignment(Alignment::Center)
-                    .style(Style::default().red()),
+                    .title(if enter.is_some() {
+                        Title::from("按 Enter 输入弹幕信息, Esc 取消输入")
+                    } else {
+                        Title::from("提示")
+                    })
+                    .title_style(if enter.is_none() {
+                        Style::default().fg(Color::Red)
+                    } else {
+                        Style::default()
+                    })
+                    .title_alignment(Alignment::Center),
             )
             .render(left, buf);
 

@@ -44,6 +44,7 @@ pub mod ui;
 #[cfg(feature = "platform-napi")]
 #[napi]
 pub struct Cli {
+    room_id: u32,
     app: Arc<Mutex<App>>,
     state: Arc<Mutex<CliState>>,
 }
@@ -70,6 +71,7 @@ impl Cli {
         let app = App::new(room_id);
 
         Ok(Self {
+            room_id,
             app: Arc::new(Mutex::new(app)),
             state: Arc::new(Mutex::new(CliState {
                 room_id,
@@ -83,6 +85,8 @@ impl Cli {
         self.state.lock().await.state
     }
 
+    /// # Safety
+    /// This function is marked as unsafe because it requires exclusive access to the state.
     #[napi]
     pub async unsafe fn run(&mut self) -> Result<()> {
         init_panic_hook();
@@ -105,13 +109,13 @@ impl Cli {
             execute!(stdout, EnterAlternateScreen, EnableMouseCapture).unwrap();
             let mut terminal = Terminal::new(CrosstermBackend::new(stdout)).unwrap();
 
-            while state.lock().await.state != AppState::Quitting {
+            while state.lock().await.state != AppState::Quit {
                 let mut state = state.lock().await;
                 let mut app = app.lock().await;
                 app.run(&mut terminal, &mut state).await.unwrap();
                 drop(app);
                 drop(state);
-                std::thread::sleep(std::time::Duration::from_secs_f32(1.0 / 120.0));
+                std::thread::sleep(std::time::Duration::from_secs_f32(1.0 / 240.0));
             }
         })
         .await
@@ -123,6 +127,8 @@ impl Cli {
         Ok(())
     }
 
+    /// # Safety
+    /// This function is marked as unsafe because it requires exclusive access to the state.
     #[napi]
     pub async unsafe fn stop(&mut self) -> Result<()> {
         let mut state = self.state.lock().await;
@@ -131,24 +137,38 @@ impl Cli {
         Ok(())
     }
 
+    /// # Safety
+    /// This function is marked as unsafe because it requires exclusive access to the state.
     #[napi]
     pub async unsafe fn send_attention_change(&mut self, attention: u32) {
-        let mut state = self.state.lock().await;
-        state.update_attention(attention);
+        if attention == 1 {
+            let info = get_room_info(self.room_id).await.unwrap();
+            let mut state = self.state.lock().await;
+            state.update_attention(info.attention);
+        } else {
+            let mut state = self.state.lock().await;
+            state.update_attention(attention);
+        }
     }
 
+    /// # Safety
+    /// This function is marked as unsafe because it requires exclusive access to the state.
     #[napi]
     pub async unsafe fn send_watcher_change(&mut self, watcher: String) {
         let mut state = self.state.lock().await;
         state.update_watcher(watcher);
     }
 
+    /// # Safety
+    /// This function is marked as unsafe because it requires exclusive access to the state.
     #[napi]
     pub async unsafe fn send_live_change(&mut self, live: bool) {
         let mut state = self.state.lock().await;
         state.update_live(live);
     }
 
+    /// # Safety
+    /// This function is marked as unsafe because it requires exclusive access to the state.
     #[napi]
     pub async unsafe fn send_msg(&mut self, t: MsgType, msg: String) {
         let mut state = self.state.lock().await;
