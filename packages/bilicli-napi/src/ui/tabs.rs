@@ -1,6 +1,6 @@
 use std::{fmt, str::FromStr};
 
-use chrono::{Local, NaiveDateTime, TimeZone};
+use chrono::{DateTime, Local, TimeZone};
 use ratatui::{
     prelude::*,
     widgets::{Block, ListState, Padding, Paragraph, Scrollbar, ScrollbarState},
@@ -108,7 +108,7 @@ impl Tab {
         let text: Vec<Line<'static>> = state
             .messages
             .iter()
-            .map(|(t, b)| Self::render_msg(*t, b.clone()))
+            .map(|(t, b)| Self::render_msg(*t, b.clone(), true))
             .collect();
 
         self.set_state_content_length(text.len());
@@ -139,7 +139,7 @@ impl Tab {
             .messages
             .iter()
             .filter(|(t, _)| *t == MsgType::Danmu)
-            .map(|(t, b)| Self::render_msg(*t, b.clone()))
+            .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
         self.set_state_content_length(text.len());
@@ -170,7 +170,7 @@ impl Tab {
             .messages
             .iter()
             .filter(|(t, _)| *t == MsgType::SuperChat)
-            .map(|(t, b)| Self::render_msg(*t, b.clone()))
+            .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
         self.set_state_content_length(text.len());
@@ -201,7 +201,7 @@ impl Tab {
             .messages
             .iter()
             .filter(|(t, _)| *t == MsgType::Gift)
-            .map(|(t, b)| Self::render_msg(*t, b.clone()))
+            .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
         self.set_state_content_length(text.len());
@@ -232,7 +232,7 @@ impl Tab {
             .messages
             .iter()
             .filter(|(t, _)| *t == MsgType::GuardBuy)
-            .map(|(t, b)| Self::render_msg(*t, b.clone()))
+            .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
         self.set_state_content_length(text.len());
@@ -263,7 +263,7 @@ impl Tab {
             .messages
             .iter()
             .filter(|(t, _)| *t == MsgType::UserAction)
-            .map(|(t, b)| Self::render_msg(*t, b.clone()))
+            .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
         self.set_state_content_length(text.len());
@@ -291,21 +291,24 @@ impl Tab {
 }
 
 impl Tab {
-    fn render_msg(t: MsgType, b: String) -> Line<'static> {
+    fn render_msg(t: MsgType, b: String, render_type: bool) -> Line<'static> {
         let user_colors: [&str; 4] = ["#967E76", "#FF7C28", "#E17AFF", "#00D1F1"];
 
         match t {
             MsgType::Danmu => {
                 let msg = serde_json::from_str::<DanmuMsg>(&b).unwrap();
-                let time = NaiveDateTime::from_timestamp(msg.timestamp, 0);
-                let time = Local.from_local_datetime(&time).unwrap();
+                let time = get_local_time_from_timestamp(msg.timestamp);
 
                 Line::from(vec![
                     Span::from(format!("{}", time.format("%H:%M:%S")))
                         .fg(Color::from_hsl(0.0, 0.0, 40.0)),
-                    Span::raw(" "),
-                    Span::from(format!("[{}]", t)).fg(Color::Yellow),
-                    Span::raw(" "),
+                    {
+                        if render_type {
+                            Span::from(format!(" [{}] ", t)).fg(Color::Yellow)
+                        } else {
+                            Span::raw(" ")
+                        }
+                    },
                     {
                         if let Some(ref badge) = msg.user.badge {
                             let color = {
@@ -373,15 +376,18 @@ impl Tab {
             }
             MsgType::SuperChat => {
                 let msg = serde_json::from_str::<SuperChatMsg>(&b).unwrap();
-                let time = NaiveDateTime::from_timestamp(msg.timestamp, 0);
-                let time = Local.from_local_datetime(&time).unwrap();
+                let time = get_local_time_from_timestamp(msg.timestamp);
 
                 Line::from(vec![
                     Span::from(format!("{}", time.format("%H:%M:%S")))
                         .fg(Color::from_hsl(0.0, 0.0, 40.0)),
-                    Span::raw(" "),
-                    Span::from(format!("[{}]", t)).fg(Color::Yellow),
-                    Span::raw(" "),
+                    {
+                        if render_type {
+                            Span::from(format!(" [{}] ", t)).fg(Color::Yellow)
+                        } else {
+                            Span::raw(" ")
+                        }
+                    },
                     {
                         if let Some(ref badge) = msg.user.badge {
                             let color = {
@@ -451,15 +457,18 @@ impl Tab {
             }
             MsgType::Gift => {
                 let msg = serde_json::from_str::<GiftMsg>(&b).unwrap();
-                let time = NaiveDateTime::from_timestamp(msg.timestamp, 0);
-                let time = Local.from_local_datetime(&time).unwrap();
+                let time = get_local_time_from_timestamp(msg.timestamp);
 
                 Line::from(vec![
                     Span::from(format!("{}", time.format("%H:%M:%S")))
                         .fg(Color::from_hsl(0.0, 0.0, 40.0)),
-                    Span::raw(" "),
-                    Span::from(format!("[{}]", t)).fg(Color::Yellow),
-                    Span::raw(" "),
+                    {
+                        if render_type {
+                            Span::from(format!(" [{}] ", t)).fg(Color::Yellow)
+                        } else {
+                            Span::raw(" ")
+                        }
+                    },
                     {
                         if let Some(ref badge) = msg.user.badge {
                             let color = {
@@ -539,15 +548,18 @@ impl Tab {
             }
             MsgType::GuardBuy => {
                 let msg = serde_json::from_str::<GuardBuyMsg>(&b).unwrap();
-                let time = NaiveDateTime::from_timestamp(msg.timestamp, 0);
-                let time = Local.from_local_datetime(&time).unwrap();
+                let time = get_local_time_from_timestamp(msg.timestamp);
 
                 Line::from(vec![
                     Span::from(format!("{}", time.format("%H:%M:%S")))
                         .fg(Color::from_hsl(0.0, 0.0, 40.0)),
-                    Span::raw(" "),
-                    Span::from(format!("[{}]", t)).fg(Color::Yellow),
-                    Span::raw(" "),
+                    {
+                        if render_type {
+                            Span::from(format!(" [{}] ", t)).fg(Color::Yellow)
+                        } else {
+                            Span::raw(" ")
+                        }
+                    },
                     {
                         if let Some(ref badge) = msg.user.badge {
                             let color = {
@@ -617,15 +629,18 @@ impl Tab {
             }
             MsgType::UserAction => {
                 let msg = serde_json::from_str::<UserActionMsg>(&b).unwrap();
-                let time = NaiveDateTime::from_timestamp(msg.timestamp, 0);
-                let time = Local.from_local_datetime(&time).unwrap();
+                let time = get_local_time_from_timestamp(msg.timestamp);
 
                 Line::from(vec![
                     Span::from(format!("{}", time.format("%H:%M:%S")))
                         .fg(Color::from_hsl(0.0, 0.0, 40.0)),
-                    Span::raw(" "),
-                    Span::from(format!("[{}]", t)).fg(Color::Yellow),
-                    Span::raw(" "),
+                    {
+                        if render_type {
+                            Span::from(format!(" [{}] ", t)).fg(Color::Yellow)
+                        } else {
+                            Span::raw(" ")
+                        }
+                    },
                     {
                         if let Some(ref badge) = msg.user.badge {
                             let color = {
@@ -693,6 +708,7 @@ impl Tab {
                             "enter" => Span::from("进入"),
                             "follow" => Span::from("关注"),
                             "share" => Span::from("分享"),
+                            "like" => Span::from("点赞"),
                             _ => Span::raw(""),
                         }
                     },
@@ -732,4 +748,10 @@ impl Default for Tabs {
             state,
         }
     }
+}
+
+fn get_local_time_from_timestamp(timestamp: i64) -> DateTime<Local> {
+    let time = DateTime::from_timestamp_millis(timestamp).unwrap();
+    let time = time.naive_local();
+    Local.from_utc_datetime(&time)
 }
