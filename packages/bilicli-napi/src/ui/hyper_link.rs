@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use ratatui::{prelude::*, text::ToSpan, widgets::Widget};
+use ratatui::{prelude::*, widgets::Widget};
 
 /// A hyperlink widget that renders a hyperlink in the terminal using [OSC 8].
 ///

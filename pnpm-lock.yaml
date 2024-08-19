@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  tiny-bilibili-ws: npm:tiny-bilibili-ws@1.0.0-beta.4
+  tiny-bilibili-ws: npm:tiny-bilibili-ws@1.0.0-beta.5
 
 importers:
 
@@ -1161,8 +1161,8 @@ packages:
     engines: {node: '>=14.0.0'}
     hasBin: true
 
-  tiny-bilibili-ws@1.0.0-beta.4:
-    resolution: {integrity: sha512-SvwQQ1RnIeef3lDVrkbPPHTIXbCOiMGthPg/UlTrMIBqzoBksywzVro3/XkzYbAbOnVL7ihhXT0g2k46d2Lzvg==}
+  tiny-bilibili-ws@1.0.0-beta.5:
+    resolution: {integrity: sha512-sBKQjCbjY6D4XVId/JyeoFsDDaToRhmKYPyUgU3EkT/6kxMS2OFEHvOAV6ShWZfpy2q0Ou1SNoIWx3EYNmY6pQ==}
 
   to-fast-properties@2.0.0:
     resolution: {integrity: sha512-/OaKK0xYrs3DmxRYqL/yDc+FxFUVYhDlXMhRmv3z915w2HF1tnN1omB354j8VUGO/hbRzyD6Y3sA7v7GS/ceog==}
@@ -1595,7 +1595,7 @@ snapshots:
 
   blive-message-listener@0.4.8:
     dependencies:
-      tiny-bilibili-ws: 1.0.0-beta.4
+      tiny-bilibili-ws: 1.0.0-beta.5
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -2240,7 +2240,7 @@ snapshots:
       csso: 5.0.5
       picocolors: 1.0.1
 
-  tiny-bilibili-ws@1.0.0-beta.4:
+  tiny-bilibili-ws@1.0.0-beta.5:
     dependencies:
       pako: 2.1.0
       ws: 8.18.0
