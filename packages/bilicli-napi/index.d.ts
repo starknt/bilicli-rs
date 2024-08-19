@@ -18,10 +18,34 @@ export const enum MsgType {
 export declare class Cli {
   constructor(roomId: number)
   get state(): Promise<AppState>
+  /**
+   * # Safety
+   * This function is marked as unsafe because it requires exclusive access to the state.
+   */
   run(): Promise<void>
+  /**
+   * # Safety
+   * This function is marked as unsafe because it requires exclusive access to the state.
+   */
   stop(): Promise<void>
+  /**
+   * # Safety
+   * This function is marked as unsafe because it requires exclusive access to the state.
+   */
   sendAttentionChange(attention: number): Promise<void>
+  /**
+   * # Safety
+   * This function is marked as unsafe because it requires exclusive access to the state.
+   */
   sendWatcherChange(watcher: string): Promise<void>
+  /**
+   * # Safety
+   * This function is marked as unsafe because it requires exclusive access to the state.
+   */
   sendLiveChange(live: boolean): Promise<void>
+  /**
+   * # Safety
+   * This function is marked as unsafe because it requires exclusive access to the state.
+   */
   sendMsg(t: MsgType, msg: string): Promise<void>
 }

@@ -539,7 +539,7 @@ impl Tab {
                     Span::raw(" "),
                     Span::from(msg.gift_name),
                     Span::raw(" "),
-                    Span::from(format!(" * {}", msg.amount)),
+                    Span::from(format!("*{}", msg.amount)),
                     {
                         if let Some(master) = msg.send_master {
                             Span::from(format!(" 给 {}", master.uname))
