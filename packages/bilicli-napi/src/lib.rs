@@ -88,22 +88,18 @@ impl Cli {
         init_panic_hook();
 
         let state = Arc::clone(&self.state);
-        let rt = tokio::runtime::Builder::new_multi_thread()
-            .worker_threads(4)
-            .enable_all()
-            .build()
-            .unwrap();
-
-        rt.spawn(async move {
+        tokio::spawn(async move {
             let mut state = state.lock().await;
             let info = get_room_info(state.room_id).await.unwrap();
             state.update_info(info);
-        });
+        })
+        .await
+        .unwrap_or_default();
 
         let state = Arc::clone(&self.state);
         let app = Arc::clone(&self.app);
 
-        rt.spawn(async move {
+        tokio::spawn(async move {
             let mut stdout = stdout();
             enable_raw_mode().unwrap();
             execute!(stdout, EnterAlternateScreen, EnableMouseCapture).unwrap();
@@ -119,7 +115,7 @@ impl Cli {
             }
         })
         .await
-        .unwrap();
+        .unwrap_or_default();
 
         disable_raw_mode()?;
         execute!(stdout(), LeaveAlternateScreen, DisableMouseCapture)?;

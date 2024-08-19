@@ -113,6 +113,11 @@ impl Tab {
 
         self.set_state_content_length(text.len());
 
+        let scroll = self.scroll();
+        if scroll + area.height < text.len() as u16 {
+            self.scroll_down();
+        }
+
         Paragraph::new(text)
             .block(
                 Block::bordered()
@@ -138,6 +143,11 @@ impl Tab {
             .collect();
 
         self.set_state_content_length(text.len());
+
+        let scroll = self.scroll();
+        if scroll + area.height < text.len() as u16 {
+            self.scroll_down();
+        }
 
         Paragraph::new(text)
             .block(
@@ -165,6 +175,11 @@ impl Tab {
 
         self.set_state_content_length(text.len());
 
+        let scroll = self.scroll();
+        if scroll + area.height < text.len() as u16 {
+            self.scroll_down();
+        }
+
         Paragraph::new(text)
             .block(
                 Block::bordered()
@@ -190,6 +205,11 @@ impl Tab {
             .collect();
 
         self.set_state_content_length(text.len());
+
+        let scroll = self.scroll();
+        if scroll + area.height < text.len() as u16 {
+            self.scroll_down();
+        }
 
         Paragraph::new(text)
             .block(
@@ -217,6 +237,11 @@ impl Tab {
 
         self.set_state_content_length(text.len());
 
+        let scroll = self.scroll();
+        if scroll + area.height < text.len() as u16 {
+            self.scroll_down();
+        }
+
         Paragraph::new(text)
             .block(
                 Block::bordered()
@@ -243,6 +268,11 @@ impl Tab {
 
         self.set_state_content_length(text.len());
 
+        let scroll = self.scroll();
+        if scroll + area.height < text.len() as u16 {
+            self.scroll_down();
+        }
+
         Paragraph::new(text)
             .block(
                 Block::bordered()
@@ -262,7 +292,7 @@ impl Tab {
 
 impl Tab {
     fn render_msg(t: MsgType, b: String) -> Line<'static> {
-        let user_colors = vec!["#967E76", "#FF7C28", "#E17AFF", "#00D1F1"];
+        let user_colors: [&str; 4] = ["#967E76", "#FF7C28", "#E17AFF", "#00D1F1"];
 
         match t {
             MsgType::Danmu => {
