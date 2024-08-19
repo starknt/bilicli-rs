@@ -10,8 +10,7 @@ cli.command('<room_id>', 'Open live console')
   .action(async (roomId: string) => {
     const app = new App(~~roomId)
 
-    app.run()
-
+    await app.run()
     process.exit(0)
   })
 

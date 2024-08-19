@@ -8,13 +8,20 @@ export const enum AppState {
   Quitting = 1,
   Quit = 2
 }
+export const enum MsgType {
+  Danmu = 0,
+  SuperChat = 1,
+  Gift = 2,
+  GuardBuy = 3,
+  UserAction = 4
+}
 export declare class Cli {
-  roomId: number
   constructor(roomId: number)
-  get state(): AppState
-  run(): void
-  stop(): void
-  sendAttentionChange(attention: number): void
-  sendWatcherChange(watcher: string): void
-  sendLiveChange(live: boolean): void
+  get state(): Promise<AppState>
+  run(): Promise<void>
+  stop(): Promise<void>
+  sendAttentionChange(attention: number): Promise<void>
+  sendWatcherChange(watcher: string): Promise<void>
+  sendLiveChange(live: boolean): Promise<void>
+  sendMsg(t: MsgType, msg: string): Promise<void>
 }

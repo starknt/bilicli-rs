@@ -1,5 +1,5 @@
-import { AppState, Cli } from '@natmri/bilicli-napi'
-import { AttentionChangeMsg, DanmuMsg, GiftMsg, GuardBuyMsg, Message, startListen, SuperChatMsg, UserActionMsg, WatchedChangeMsg } from 'blive-message-listener'
+import { Cli, MsgType } from '@natmri/bilicli-napi'
+import { AttentionChangeMsg, startListen, WatchedChangeMsg } from 'blive-message-listener'
 
 
 
@@ -12,18 +12,40 @@ export class App {
     startListen(this.roomId, {
       onAttentionChange: ({ body }) => this.handleAttentionChange(body),
       onWatchedChange: ({ body }) => this.handleWatchedChange(body),
-      onLiveStart: () => this.handleLiveStart(),
-      onLiveEnd: () => this.handleLiveEnd(),
-      onIncomeDanmu: (msg) => this.handleIncomeDanmu(msg),
-      onIncomeSuperChat: (msg) => this.handleIncomeSuperChat(msg),
-      onGift: (msg) => this.handleGift(msg),
-      onGuardBuy: (msg) => this.handleGuardBuy(msg),
-      onUserAction: (msg) => this.handleUserAction(msg)
+      onLiveStart: () => this.cli.sendLiveChange(true),
+      onLiveEnd: () => this.cli.sendLiveChange(false),
+      onIncomeDanmu: (msg) => {
+        this.cli.sendMsg(MsgType.Danmu, JSON.stringify(msg.body))
+      },
+      onIncomeSuperChat: (msg) => {
+        this.cli.sendMsg(MsgType.SuperChat, JSON.stringify({
+          ...msg.body,
+          timestamp: msg.timestamp,
+        }))
+      },
+      onGift: (msg) => {
+        this.cli.sendMsg(MsgType.Gift, JSON.stringify({
+          ...msg.body,
+          timestamp: msg.timestamp,
+        }))
+      },
+      onGuardBuy: (msg) => {
+        this.cli.sendMsg(MsgType.GuardBuy, JSON.stringify({
+          ...msg.body,
+          timestamp: msg.timestamp,
+        }))
+      },
+      onUserAction: (msg) => {
+        this.cli.sendMsg(MsgType.UserAction, JSON.stringify({
+          ...msg.body,
+          timestamp: msg.timestamp,
+        }))
+      }
     })
   }
 
-  run() {
-    this.cli.run()
+  async run() {
+    await this.cli.run()
   }
 
   private handleAttentionChange(body: AttentionChangeMsg) {
@@ -31,25 +53,6 @@ export class App {
   }
 
   private handleWatchedChange(body: WatchedChangeMsg) {
-    console.log({body})
     this.cli.sendWatcherChange(body.text_small)
   }
-
-  private handleLiveStart() {
-    this.cli.sendLiveChange(true)
-  }
-
-  private handleLiveEnd() {
-    this.cli.sendLiveChange(false)
-  }
-
-  private handleIncomeDanmu(msg: Message<DanmuMsg>) {}
-
-  private handleIncomeSuperChat(msg: Message<SuperChatMsg>) {}
-  
-  private handleGift(msg: Message<GiftMsg>) {}
-
-  private handleGuardBuy(msg: Message<GuardBuyMsg>) {}
-
-  private handleUserAction(msg: Message<UserActionMsg>) {}
 }

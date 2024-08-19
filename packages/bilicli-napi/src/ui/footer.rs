@@ -4,61 +4,45 @@ use ratatui::{
     widgets::{Block, Padding, Paragraph},
 };
 
-use crate::api::RoomInfo;
+use crate::CliState;
 
-#[derive(Clone)]
-pub struct Footer {
-    pub attention: u32,
-    pub watchers: String,
-    pub is_live: bool,
-    pub start_time: NaiveDateTime,
-}
+#[derive(Clone, Debug, Default)]
+pub struct Footer;
 
-impl Footer {
-    pub fn new(info: RoomInfo) -> Self {
-        let start_time =
-            NaiveDateTime::parse_from_str(&info.live_time, "%Y-%m-%d %H:%M:%S").unwrap_or_default();
-        Self {
-            attention: info.attention,
-            watchers: "1".to_string(),
-            is_live: info.live_status == 1,
-            start_time,
-        }
-    }
+// impl FooterState {
+//     pub fn new(attention: u32, watchers: String, is_live: bool, start_time: NaiveDateTime) -> Self {
+//         Self {
+//             attention,
+//             watchers,
+//             is_live,
+//             start_time,
+//         }
+//     }
 
-    pub fn update_info(&mut self, info: RoomInfo) {
-        self.attention = info.attention;
-        self.is_live = info.live_status == 1;
-        self.start_time =
-            NaiveDateTime::parse_from_str(&info.live_time, "%Y-%m-%d %H:%M:%S").unwrap_or_default();
-    }
+//     pub fn update_info(&mut self, info: RoomInfo) {
+//         self.attention = info.attention;
+//         self.is_live = info.live_status == 1;
+//         self.start_time =
+//             NaiveDateTime::parse_from_str(&info.live_time, "%Y-%m-%d %H:%M:%S").unwrap_or_default();
+//     }
 
-    pub fn update_attention(&mut self, attention: u32) {
-        self.attention = attention;
-    }
+//     pub fn update_attention(&mut self, attention: u32) {
+//         self.attention = attention;
+//     }
 
-    pub fn update_watcher(&mut self, watcher: String) {
-        self.watchers = watcher;
-    }
+//     pub fn update_watcher(&mut self, watcher: String) {
+//         self.watchers = watcher;
+//     }
 
-    pub fn update_live(&mut self, live: bool) {
-        self.is_live = live;
-    }
-}
+//     pub fn update_live(&mut self, live: bool) {
+//         self.is_live = live;
+//     }
+// }
 
-impl Default for Footer {
-    fn default() -> Self {
-        Self {
-            attention: 0,
-            watchers: "1".to_string(),
-            is_live: false,
-            start_time: NaiveDateTime::default(),
-        }
-    }
-}
+impl StatefulWidget for &mut Footer {
+    type State = CliState;
 
-impl Widget for &Footer {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         let [left, right] = Layout::horizontal([Constraint::Percentage(40), Constraint::Fill(1)])
             .flex(layout::Flex::SpaceBetween)
             .areas(area);
@@ -83,8 +67,8 @@ impl Widget for &Footer {
             )
             .render(left, buf);
 
-        if self.is_live {
-            let text = self.format_duration();
+        if state.is_live {
+            let text = format_duration(state.start_time);
             Paragraph::new(Line::from(vec![
                 "🔴"
                     .to_string()
@@ -93,7 +77,7 @@ impl Widget for &Footer {
                 Span::from("  "),
                 Span::from(text),
                 Span::from("  "),
-                Span::from(format!("(Start at {})", self.start_time.format("%H:%M"))),
+                Span::from(format!("(Start at {})", state.start_time.format("%H:%M"))),
             ]))
             .block(
                 Block::bordered()
@@ -119,7 +103,7 @@ impl Widget for &Footer {
         }
 
         Paragraph::new(Line::from(
-            format!("👀 {}", self.watchers)
+            format!("👀 {}", state.watchers)
                 .fg(Color::LightGreen)
                 .add_modifier(Modifier::BOLD),
         ))
@@ -131,7 +115,7 @@ impl Widget for &Footer {
         .render(watcher_area, buf);
 
         Paragraph::new(Line::from(
-            format!("🔥 {}", self.attention)
+            format!("🔥 {}", state.attention)
                 .fg(Color::LightGreen)
                 .add_modifier(Modifier::BOLD),
         ))
@@ -144,48 +128,46 @@ impl Widget for &Footer {
     }
 }
 
-impl Footer {
-    fn format_duration(&self) -> String {
-        let now = Local::now().naive_local();
-        let diff = now.signed_duration_since(self.start_time);
-        let seconds = diff.num_seconds();
+fn format_duration(start_time: NaiveDateTime) -> String {
+    let now = Local::now().naive_local();
+    let diff = now.signed_duration_since(start_time);
+    let seconds = diff.num_seconds();
 
-        let hours = seconds / 3600;
-        let minutes = (seconds - hours * 3600) / 60;
-        let secs = seconds - hours * 3600 - minutes * 60;
+    let hours = seconds / 3600;
+    let minutes = (seconds - hours * 3600) / 60;
+    let secs = seconds - hours * 3600 - minutes * 60;
 
-        let format_hours = {
-            if hours > 0 {
-                format!("{}", hours).to_string()
-            } else {
-                "".to_string()
-            }
-        };
+    let format_hours = {
+        if hours > 0 {
+            format!("{}", hours).to_string()
+        } else {
+            "".to_string()
+        }
+    };
 
-        let format_minutes = {
-            if hours > 0 {
-                if minutes < 10 {
-                    format!("0{}", minutes).to_string()
-                } else {
-                    format!("{}", minutes).to_string()
-                }
+    let format_minutes = {
+        if hours > 0 {
+            if minutes < 10 {
+                format!("0{}", minutes).to_string()
             } else {
                 format!("{}", minutes).to_string()
             }
-        };
-
-        let format_seconds = {
-            if secs < 10 {
-                format!("0{}", secs).to_string()
-            } else {
-                format!("{}", secs).to_string()
-            }
-        };
-
-        if format_hours.is_empty() {
-            format!("{}:{}", format_minutes, format_seconds).to_string()
         } else {
-            format!("{}:{}:{}", format_hours, format_minutes, format_seconds).to_string()
+            format!("{}", minutes).to_string()
         }
+    };
+
+    let format_seconds = {
+        if secs < 10 {
+            format!("0{}", secs).to_string()
+        } else {
+            format!("{}", secs).to_string()
+        }
+    };
+
+    if format_hours.is_empty() {
+        format!("{}:{}", format_minutes, format_seconds).to_string()
+    } else {
+        format!("{}:{}:{}", format_hours, format_minutes, format_seconds).to_string()
     }
 }

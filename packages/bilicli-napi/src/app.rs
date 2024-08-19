@@ -3,8 +3,8 @@
 use std::time::Duration;
 
 use crate::{
-    api::RoomInfo,
     ui::{footer::Footer, header::Header, tabs::Tabs, AppState, InputMode},
+    CliState,
 };
 use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind};
 use futures::StreamExt;
@@ -19,15 +19,14 @@ pub const MAX_INPUT_LENGTH: usize = 40;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct App {
     pub input_mode: InputMode,
-    pub state: AppState,
     header: Header,
     footer: Footer,
     tabs: Tabs,
     pub textarea: TextArea<'static>,
-    pub messages: Vec<String>,
+    pub will_send_message: Vec<String>,
 }
 
 unsafe impl Send for App {}
@@ -37,40 +36,45 @@ impl App {
         Self {
             textarea: TextArea::default(),
             input_mode: InputMode::Normal,
-            state: AppState::Running,
-            header: Header::default(),
-            footer: Footer::default(),
+            header: Header,
+            footer: Footer,
             tabs: Tabs::default(),
-            messages: vec![],
+            will_send_message: vec![],
         }
     }
 
     const FRAMES_PER_SECOND: f32 = 60.0;
 
-    pub async fn run(&mut self, terminal: &mut Terminal<impl Backend>) -> Result<()> {
+    pub async fn run(
+        &mut self,
+        terminal: &mut Terminal<impl Backend>,
+        state: &mut CliState,
+    ) -> Result<()> {
         let mut interval =
             tokio::time::interval(Duration::from_secs_f32(1.0 / Self::FRAMES_PER_SECOND));
         let mut events = EventStream::new();
 
-        while self.state != AppState::Quit {
-            tokio::select! {
-                _ = interval.tick() => self.draw(terminal)?,
-                Some(Ok(event)) = events.next() =>  self.handle_events(&event)?,
-            }
+        tokio::select! {
+            _ = interval.tick() => self.draw(terminal, state)?,
+            Some(Ok(event)) = events.next() =>  self.handle_events(&event, state)?,
         }
 
         Ok(())
     }
 
-    fn draw(&mut self, terminal: &mut Terminal<impl Backend>) -> crate::app::Result<()> {
+    fn draw(
+        &mut self,
+        terminal: &mut Terminal<impl Backend>,
+        state: &mut CliState,
+    ) -> crate::app::Result<()> {
         terminal.draw(|f| {
-            f.render_widget(self, f.area());
+            f.render_stateful_widget(self, f.area(), state);
         })?;
 
         Ok(())
     }
 
-    fn handle_events(&mut self, event: &Event) -> crate::app::Result<()> {
+    pub fn handle_events(&mut self, event: &Event, state: &mut CliState) -> crate::app::Result<()> {
         if let Event::Key(key) = event {
             match self.input_mode {
                 InputMode::Normal => {
@@ -84,15 +88,15 @@ impl App {
                             KeyCode::Char('s') => {
                                 self.scroll_down();
                             }
-                            KeyCode::Char('q') => self.quit(),
+                            KeyCode::Char('q') => self.quit(state),
                             KeyCode::Char('y') => {
-                                if self.state == AppState::Quitting {
-                                    self.state = AppState::Quit;
+                                if state.state == AppState::Quitting {
+                                    state.state = AppState::Quit;
                                 }
                             }
                             KeyCode::Char('n') => {
-                                if self.state == AppState::Quitting {
-                                    self.state = AppState::Running;
+                                if state.state == AppState::Quitting {
+                                    state.state = AppState::Running;
                                 }
                             }
                             KeyCode::Enter => {
@@ -107,7 +111,7 @@ impl App {
                 InputMode::Editing => match key.code {
                     KeyCode::Enter => {
                         if !self.textarea.lines()[0].is_empty() {
-                            self.messages.push(self.textarea.yank_text());
+                            self.will_send_message.push(self.textarea.yank_text());
                             self.textarea.delete_str(self.textarea.lines()[0].len());
                         }
                     }
@@ -125,11 +129,6 @@ impl App {
             }
         }
         Ok(())
-    }
-
-    pub fn update_info(&mut self, info: RoomInfo) {
-        self.header.update_info(info.clone());
-        self.footer.update_info(info.clone());
     }
 
     pub fn scroll_up(&mut self) {
@@ -150,35 +149,25 @@ impl App {
         self.tabs.state.select_previous();
     }
 
-    pub fn send_attention_change(&mut self, attention: u32) {
-        self.footer.update_attention(attention);
-    }
-
-    pub fn send_watcher_change(&mut self, watched: String) {
-        self.footer.update_watcher(watched);
-    }
-
-    pub fn send_live_change(&mut self, live: bool) {
-        self.footer.update_live(live);
-    }
-
-    pub fn quit(&mut self) {
-        if self.state == AppState::Quit {
+    pub fn quit(&mut self, state: &mut CliState) {
+        if state.state == AppState::Quit {
             return;
         }
 
-        if self.state == AppState::Quitting {
-            self.state = AppState::Quit;
+        if state.state == AppState::Quitting {
+            state.state = AppState::Quit;
             return;
         }
 
-        self.state = AppState::Quitting;
+        state.state = AppState::Quitting;
     }
 }
 
-impl Widget for &mut App {
-    fn render(self, root: Rect, buf: &mut Buffer) {
-        if self.state == AppState::Quitting {
+impl StatefulWidget for &mut App {
+    type State = CliState;
+
+    fn render(self, root: Rect, buf: &mut Buffer, state: &mut Self::State) {
+        if state.state == AppState::Quitting {
             self.render_quit_question(root, buf);
             return;
         }
@@ -192,13 +181,13 @@ impl Widget for &mut App {
         let horizontal: Layout = Layout::horizontal([Constraint::Length(8), Constraint::Fill(1)]);
         let [header_area, inner_area, footer_area] = vertical.areas(root);
         let [tabs_area, content_area] = horizontal.areas(inner_area);
-        self.header.render(header_area, buf);
+        self.header.render(header_area, buf, state);
         self.render_tabs(tabs_area, buf);
-        self.render_selected_tab(content_area, buf);
+        self.render_selected_tab(content_area, buf, state);
         if self.input_mode == InputMode::Editing {
             self.render_input(footer_area, buf);
         } else {
-            self.footer.render(footer_area, buf);
+            self.footer.render(footer_area, buf, state);
         }
     }
 }
@@ -241,9 +230,9 @@ impl App {
         StatefulWidget::render(list, area, buf, &mut self.tabs.state);
     }
 
-    fn render_selected_tab(&mut self, area: Rect, buf: &mut Buffer) {
+    fn render_selected_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut CliState) {
         let tab = &mut self.tabs.tabs[self.tabs.state.selected().unwrap()];
-        tab.render(area, buf);
+        tab.render(area, buf, state);
     }
 
     fn render_input(&mut self, area: Rect, buf: &mut Buffer) {

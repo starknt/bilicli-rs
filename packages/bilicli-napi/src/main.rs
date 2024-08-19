@@ -20,10 +20,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     enable_raw_mode().unwrap();
     execute!(stdout(), EnterAlternateScreen, EnableMouseCapture).unwrap();
-    let mut terminal = Terminal::new(CrosstermBackend::new(stdout())).unwrap();
-    let info = get_room_info(room_id).await.unwrap();
-    app.update_info(info);
-    app.run(&mut terminal).await.unwrap();
+    // let mut terminal = Terminal::new(CrosstermBackend::new(stdout())).unwrap();
+    // let info = get_room_info(room_id).await.unwrap();
+    // app.update_info(info);
+    // app.run(&mut terminal).await.unwrap();
 
     disable_raw_mode()?;
     execute!(stdout(), LeaveAlternateScreen, DisableMouseCapture)?;
