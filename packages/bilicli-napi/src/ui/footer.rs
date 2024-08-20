@@ -8,7 +8,7 @@ use ratatui::{
 
 use crate::CliState;
 
-use super::{MsgType, UserActionMsg};
+use super::{colors::USER_COLORS, MsgType, UserActionMsg};
 
 #[derive(Clone, Debug, Default)]
 pub struct Footer;
@@ -23,8 +23,8 @@ impl StatefulWidget for &mut Footer {
 
         let [info_area, watcher_area, attention_area] = Layout::horizontal([
             Constraint::Fill(1),
-            Constraint::Length(12),
-            Constraint::Length(12),
+            Constraint::Length(14),
+            Constraint::Length(14),
         ])
         .flex(layout::Flex::SpaceBetween)
         .areas(right);
@@ -40,8 +40,6 @@ impl StatefulWidget for &mut Footer {
             .last();
 
         let text = {
-            let user_colors: [&str; 4] = ["#967E76", "#FF7C28", "#E17AFF", "#00D1F1"];
-
             if let Some(enter) = enter {
                 let (_, msg) = enter;
                 let msg = serde_json::from_str::<UserActionMsg>(msg).unwrap();
@@ -99,10 +97,10 @@ impl StatefulWidget for &mut Footer {
                     {
                         let color = {
                             if let Some(identity) = msg.user.identity {
-                                let index = identity.guard_level as usize % user_colors.len();
-                                Color::from_str(user_colors[index]).unwrap()
+                                let index = identity.guard_level as usize % USER_COLORS.len();
+                                Color::from_str(USER_COLORS[index]).unwrap()
                             } else {
-                                Color::from_str(user_colors[0]).unwrap()
+                                Color::from_str(USER_COLORS[0]).unwrap()
                             }
                         };
 

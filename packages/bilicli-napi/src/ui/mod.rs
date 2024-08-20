@@ -5,6 +5,7 @@ use napi_derive::napi;
 use serde::Deserialize;
 use strum::{Display, EnumIter, FromRepr};
 
+pub mod colors;
 pub mod footer;
 pub mod header;
 pub mod hyper_link;

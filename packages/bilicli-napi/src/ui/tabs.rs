@@ -9,7 +9,9 @@ use ratatui::{
 
 use crate::CliState;
 
-use super::{DanmuMsg, GiftMsg, GuardBuyMsg, MsgType, SuperChatMsg, UserActionMsg};
+use super::{
+    colors::USER_COLORS, DanmuMsg, GiftMsg, GuardBuyMsg, MsgType, SuperChatMsg, UserActionMsg,
+};
 
 #[derive(Clone)]
 pub enum Tab {
@@ -26,7 +28,7 @@ impl Tab {
         match self {
             Tab::AllTab(_, _) => "全部".to_string(),
             Tab::DanMuTab(_, _) => "弹幕".to_string(),
-            Tab::SCTab(_, _) => "SC".to_string(),
+            Tab::SCTab(_, _) => "SC  ".to_string(),
             Tab::GiftTab(_, _) => "礼物".to_string(),
             Tab::CaptainTab(_, _) => "上舰".to_string(),
             Tab::EnterTab(_, _) => "入场".to_string(),
@@ -377,8 +379,6 @@ impl Tab {
 
 impl Tab {
     fn render_msg(t: MsgType, b: String, render_type: bool) -> Line<'static> {
-        let user_colors: [&str; 4] = ["#967E76", "#FF7C28", "#E17AFF", "#00D1F1"];
-
         match t {
             MsgType::Danmu => {
                 let msg = serde_json::from_str::<DanmuMsg>(&b).unwrap();
@@ -448,10 +448,10 @@ impl Tab {
                     {
                         let color = {
                             if let Some(identity) = msg.user.identity {
-                                let index = identity.guard_level as usize % user_colors.len();
-                                Color::from_str(user_colors[index]).unwrap()
+                                let index = identity.guard_level as usize % USER_COLORS.len();
+                                Color::from_str(USER_COLORS[index]).unwrap()
                             } else {
-                                Color::from_str(user_colors[0]).unwrap()
+                                Color::from_str(USER_COLORS[0]).unwrap()
                             }
                         };
 
@@ -527,10 +527,10 @@ impl Tab {
                     {
                         let color = {
                             if let Some(identity) = msg.user.identity {
-                                let index = identity.guard_level as usize % user_colors.len();
-                                Color::from_str(user_colors[index]).unwrap()
+                                let index = identity.guard_level as usize % USER_COLORS.len();
+                                Color::from_str(USER_COLORS[index]).unwrap()
                             } else {
-                                Color::from_str(user_colors[0]).unwrap()
+                                Color::from_str(USER_COLORS[0]).unwrap()
                             }
                         };
 
@@ -608,10 +608,10 @@ impl Tab {
                     {
                         let color = {
                             if let Some(identity) = msg.user.identity {
-                                let index = identity.guard_level as usize % user_colors.len();
-                                Color::from_str(user_colors[index]).unwrap()
+                                let index = identity.guard_level as usize % USER_COLORS.len();
+                                Color::from_str(USER_COLORS[index]).unwrap()
                             } else {
-                                Color::from_str(user_colors[0]).unwrap()
+                                Color::from_str(USER_COLORS[0]).unwrap()
                             }
                         };
 
@@ -700,10 +700,10 @@ impl Tab {
                     {
                         let color = {
                             if let Some(identity) = msg.user.identity {
-                                let index = identity.guard_level as usize % user_colors.len();
-                                Color::from_str(user_colors[index]).unwrap()
+                                let index = identity.guard_level as usize % USER_COLORS.len();
+                                Color::from_str(USER_COLORS[index]).unwrap()
                             } else {
-                                Color::from_str(user_colors[0]).unwrap()
+                                Color::from_str(USER_COLORS[0]).unwrap()
                             }
                         };
 
@@ -782,10 +782,10 @@ impl Tab {
                     {
                         let color = {
                             if let Some(identity) = msg.user.identity {
-                                let index = identity.guard_level as usize % user_colors.len();
-                                Color::from_str(user_colors[index]).unwrap()
+                                let index = identity.guard_level as usize % USER_COLORS.len();
+                                Color::from_str(USER_COLORS[index]).unwrap()
                             } else {
-                                Color::from_str(user_colors[0]).unwrap()
+                                Color::from_str(USER_COLORS[0]).unwrap()
                             }
                         };
 
