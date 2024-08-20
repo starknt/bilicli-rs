@@ -108,24 +108,34 @@ impl App {
                         }
                     }
                 }
-                InputMode::Editing => match key.code {
-                    KeyCode::Enter => {
-                        if !self.textarea.lines()[0].is_empty() {
-                            self.will_send_message.push(self.textarea.yank_text());
-                            self.textarea.delete_str(self.textarea.lines()[0].len());
+                InputMode::Editing => {
+                    if key.kind == KeyEventKind::Press {
+                        match key.code {
+                            KeyCode::Up => {
+                                self.previous_tab();
+                            }
+                            KeyCode::Down => {
+                                self.next_tab();
+                            }
+                            KeyCode::Enter => {
+                                if !self.textarea.lines()[0].is_empty() {
+                                    self.will_send_message.push(self.textarea.yank_text());
+                                    self.textarea.delete_str(self.textarea.lines()[0].len());
+                                }
+                            }
+                            KeyCode::Esc => {
+                                self.input_mode = InputMode::Normal;
+                            }
+                            _ => {
+                                if self.textarea.input(*key)
+                                    && self.textarea.lines()[0].len() > MAX_INPUT_LENGTH
+                                {
+                                    self.textarea.delete_char();
+                                }
+                            }
                         }
                     }
-                    KeyCode::Esc => {
-                        self.input_mode = InputMode::Normal;
-                    }
-                    _ => {
-                        if self.textarea.input(*key)
-                            && self.textarea.lines()[0].len() > MAX_INPUT_LENGTH
-                        {
-                            self.textarea.delete_char();
-                        }
-                    }
-                },
+                }
             }
         }
         Ok(())
