@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-crate-type = ["cdylib", "lib"]
+crate-type = ["cdylib"]
 
 [features]
 platform-napi = []
@@ -26,7 +26,6 @@ itertools = "0.13"
 
 [build-dependencies]
 napi-build = "2.1.3"
-cfg_aliases = "0.2.1"
 
 [profile.release]
 lto = true
