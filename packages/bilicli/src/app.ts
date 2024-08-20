@@ -1,15 +1,22 @@
 import { Cli, MsgType } from '@natmri/bilicli-napi'
-import { AttentionChangeMsg, startListen, WatchedChangeMsg } from 'blive-message-listener'
+import { AttentionChangeMsg, MsgHandler, startListen, WatchedChangeMsg } from 'blive-message-listener'
 
+export interface AppOptions {
+  cookie?: string
+  config?: string
+}
 
+export interface EditOptions {
+  config: string
+}
 
 export class App {
   private cli!: Cli
 
-  constructor(readonly roomId: number) {
+  constructor(readonly roomId: number, private options: AppOptions) {
     this.cli = new Cli(this.roomId)
-    
-    startListen(this.roomId, {
+
+    const handler: MsgHandler = {
       onAttentionChange: ({ body }) => this.handleAttentionChange(body),
       onWatchedChange: ({ body }) => this.handleWatchedChange(body),
       onLiveStart: () => this.cli.sendLiveChange(true),
@@ -40,6 +47,14 @@ export class App {
           ...msg.body,
           timestamp: msg.timestamp,
         }))
+      },
+    }
+    
+    startListen(this.roomId, handler, {
+      ws: {
+        headers: {
+          'Cookie': this.options?.cookie || '',
+        }
       }
     })
   }
