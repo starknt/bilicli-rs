@@ -612,7 +612,7 @@ impl Tab {
                     Span::raw(" "),
                     Span::from(msg.gift_name),
                     Span::raw(" "),
-                    Span::from(format!("*{:2}!", msg.amount)),
+                    Span::from(format!("* {}", msg.amount)),
                     Span::raw(" "),
                     Span::from(format!(
                         "({:.1} 元)",
@@ -703,10 +703,10 @@ impl Tab {
                         Span::from(msg.user.uname).bold().fg(color)
                     },
                     Span::raw(": "),
-                    Span::from(format!("在你的直播间购买了{}", msg.gift_name))
-                        .fg(tailwind::GREEN.c400),
+                    Span::from("在你的直播间购买了"),
+                    Span::from(msg.gift_name).fg(tailwind::GREEN.c400).bold(),
                     Span::raw(" "),
-                    Span::from(format!("( {} 元)", msg.price)),
+                    Span::from(format!("({} 元)", msg.price)),
                 ])
             }
             MsgType::UserAction => {
