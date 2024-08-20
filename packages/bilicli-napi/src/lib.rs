@@ -35,6 +35,7 @@ use ratatui::crossterm::{
     execute,
     terminal::{disable_raw_mode, LeaveAlternateScreen},
 };
+#[cfg(feature = "platform-napi")]
 use tokio::sync::Mutex;
 
 pub mod api;
@@ -108,14 +109,12 @@ impl Cli {
             enable_raw_mode().unwrap();
             execute!(stdout, EnterAlternateScreen, EnableMouseCapture).unwrap();
             let mut terminal = Terminal::new(CrosstermBackend::new(stdout)).unwrap();
-
-            while state.lock().await.state != AppState::Quit {
+            let mut app_state = AppState::Running;
+            while app_state != AppState::Quit {
                 let mut state = state.lock().await;
                 let mut app = app.lock().await;
                 app.run(&mut terminal, &mut state).await.unwrap();
-                drop(app);
-                drop(state);
-                std::thread::sleep(std::time::Duration::from_secs_f32(1.0 / 240.0));
+                app_state = state.state;
             }
         })
         .await
@@ -144,7 +143,7 @@ impl Cli {
         if attention == 1 {
             let info = get_room_info(self.room_id).await.unwrap();
             let mut state = self.state.lock().await;
-            state.update_attention(info.attention);
+            state.update_info(info);
         } else {
             let mut state = self.state.lock().await;
             state.update_attention(attention);
