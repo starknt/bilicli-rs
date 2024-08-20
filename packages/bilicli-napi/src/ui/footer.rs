@@ -23,8 +23,8 @@ impl StatefulWidget for &mut Footer {
 
         let [info_area, watcher_area, attention_area] = Layout::horizontal([
             Constraint::Fill(1),
-            Constraint::Length(16),
-            Constraint::Length(16),
+            Constraint::Length(12),
+            Constraint::Length(12),
         ])
         .flex(layout::Flex::SpaceBetween)
         .areas(right);

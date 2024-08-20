@@ -77,6 +77,27 @@ impl Tab {
         }
     }
 
+    pub fn set_state_viewport_content_length(&mut self, viewport_content_length: usize) {
+        match self {
+            Tab::AllTab(_, state) => {
+                *state = state.viewport_content_length(viewport_content_length)
+            }
+            Tab::DanMuTab(_, state) => {
+                *state = state.viewport_content_length(viewport_content_length)
+            }
+            Tab::SCTab(_, state) => *state = state.viewport_content_length(viewport_content_length),
+            Tab::GiftTab(_, state) => {
+                *state = state.viewport_content_length(viewport_content_length)
+            }
+            Tab::CaptainTab(_, state) => {
+                *state = state.viewport_content_length(viewport_content_length)
+            }
+            Tab::EnterTab(_, state) => {
+                *state = state.viewport_content_length(viewport_content_length)
+            }
+        }
+    }
+
     pub fn state(&mut self) -> &mut ScrollbarState {
         match self {
             Tab::AllTab(_, state) => state,
@@ -105,8 +126,12 @@ impl StatefulWidget for &mut Tab {
 }
 
 impl Tab {
-    fn should_scroll(&mut self, content_length: usize, area: &Rect) -> bool {
+    fn should_scroll_down(&mut self, content_length: usize, area: &Rect) -> bool {
         self.scroll() + area.height - 2 < content_length as u16
+    }
+
+    fn should_scroll_up(&mut self, area: &Rect, content_length: usize) -> bool {
+        self.scroll() > 0 && area.height > content_length as u16
     }
 
     fn render_all_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut CliState) {
@@ -117,10 +142,24 @@ impl Tab {
             .map(|(t, b)| Self::render_msg(*t, b.clone(), true))
             .collect();
 
-        self.set_state_content_length(text.len());
+        let content_length = {
+            let len = text.len();
 
-        if self.should_scroll(text.len(), &area) {
+            if len > area.height as usize {
+                len - area.height as usize
+            } else {
+                0
+            }
+        };
+
+        self.set_state_content_length(content_length);
+
+        if self.should_scroll_down(text.len(), &area) {
             self.scroll_down();
+        }
+
+        if self.should_scroll_up(&area, text.len()) {
+            self.scroll_up();
         }
 
         Paragraph::new(text)
@@ -147,10 +186,24 @@ impl Tab {
             .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
-        self.set_state_content_length(text.len());
+        let content_length = {
+            let len = text.len();
 
-        if self.should_scroll(text.len(), &area) {
+            if len > area.height as usize {
+                len - area.height as usize
+            } else {
+                0
+            }
+        };
+
+        self.set_state_content_length(content_length);
+
+        if self.should_scroll_down(text.len(), &area) {
             self.scroll_down();
+        }
+
+        if self.should_scroll_up(&area, text.len()) {
+            self.scroll_up();
         }
 
         Paragraph::new(text)
@@ -177,10 +230,24 @@ impl Tab {
             .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
-        self.set_state_content_length(text.len());
+        let content_length = {
+            let len = text.len();
 
-        if self.should_scroll(text.len(), &area) {
+            if len > area.height as usize {
+                len - area.height as usize
+            } else {
+                0
+            }
+        };
+
+        self.set_state_content_length(content_length);
+
+        if self.should_scroll_down(text.len(), &area) {
             self.scroll_down();
+        }
+
+        if self.should_scroll_up(&area, text.len()) {
+            self.scroll_up();
         }
 
         Paragraph::new(text)
@@ -207,10 +274,24 @@ impl Tab {
             .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
-        self.set_state_content_length(text.len());
+        let content_length = {
+            let len = text.len();
 
-        if self.should_scroll(text.len(), &area) {
+            if len > area.height as usize {
+                len - area.height as usize
+            } else {
+                0
+            }
+        };
+
+        self.set_state_content_length(content_length);
+
+        if self.should_scroll_down(text.len(), &area) {
             self.scroll_down();
+        }
+
+        if self.should_scroll_up(&area, text.len()) {
+            self.scroll_up();
         }
 
         Paragraph::new(text)
@@ -237,10 +318,24 @@ impl Tab {
             .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
-        self.set_state_content_length(text.len());
+        let content_length = {
+            let len = text.len();
 
-        if self.should_scroll(text.len(), &area) {
+            if len > area.height as usize {
+                len - area.height as usize
+            } else {
+                0
+            }
+        };
+
+        self.set_state_content_length(content_length);
+
+        if self.should_scroll_down(text.len(), &area) {
             self.scroll_down();
+        }
+
+        if self.should_scroll_up(&area, text.len()) {
+            self.scroll_up();
         }
 
         Paragraph::new(text)
@@ -267,10 +362,24 @@ impl Tab {
             .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
-        self.set_state_content_length(text.len());
+        let content_length = {
+            let len = text.len();
 
-        if self.should_scroll(text.len(), &area) {
+            if len > area.height as usize {
+                len - area.height as usize
+            } else {
+                0
+            }
+        };
+
+        self.set_state_content_length(content_length);
+
+        if self.should_scroll_down(text.len(), &area) {
             self.scroll_down();
+        }
+
+        if self.should_scroll_up(&area, text.len()) {
+            self.scroll_up();
         }
 
         Paragraph::new(text)
@@ -452,7 +561,7 @@ impl Tab {
                         Span::from(msg.user.uname).bold().fg(color)
                     },
                     Span::raw(": "),
-                    Span::from(format!("(¥ {})", msg.price)),
+                    Span::from(format!("({} 元)", msg.price)),
                     Span::raw(" "),
                     Span::from(msg.content),
                 ])
@@ -539,7 +648,7 @@ impl Tab {
                     Span::raw(" "),
                     Span::from(format!("*{:2}!", msg.amount)),
                     Span::raw(" "),
-                    Span::from(format!("(¥{})", msg.price / 1000)),
+                    Span::from(format!("({:.1} 元)", msg.price as f32 / 1000.0)),
                     {
                         if let Some(master) = msg.send_master {
                             Span::from(format!(" 给 {}", master.uname))
