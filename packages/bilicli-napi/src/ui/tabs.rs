@@ -614,10 +614,17 @@ impl Tab {
                     Span::raw(" "),
                     Span::from(format!("* {}", msg.amount)),
                     Span::raw(" "),
-                    Span::from(format!(
-                        "({:.1} 元)",
-                        (msg.price * msg.amount) as f32 / 1000.0
-                    )),
+                    {
+                        let total = (msg.price * msg.amount) as f32 / 1000.0;
+
+                        if total == 0.0 {
+                            Span::raw("")
+                        } else {
+                            Span::from(format!("({:.1} 元)", total))
+                                .fg(Color::LightMagenta)
+                                .bold()
+                        }
+                    },
                     {
                         if let Some(master) = msg.send_master {
                             Span::from(format!(" 给 {}", master.uname))
