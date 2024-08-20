@@ -163,11 +163,21 @@ impl App {
     }
 
     pub fn next_tab(&mut self) {
-        self.tabs.state.select_next();
+        let selected = self.tabs.state.selected().unwrap();
+        if selected + 1 < self.tabs.tabs.len() {
+            self.tabs.state.select(Some(selected + 1));
+        } else {
+            self.tabs.state.select(Some(0));
+        }
     }
 
     pub fn previous_tab(&mut self) {
-        self.tabs.state.select_previous();
+        let selected = self.tabs.state.selected().unwrap();
+        if selected > 0 {
+            self.tabs.state.select(Some(selected - 1));
+        } else {
+            self.tabs.state.select(Some(self.tabs.tabs.len() - 1));
+        }
     }
 
     pub fn quit(&mut self, state: &mut CliState) {
