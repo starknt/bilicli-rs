@@ -10,7 +10,8 @@ use ratatui::{
 use crate::CliState;
 
 use super::{
-    colors::USER_COLORS, DanmuMsg, GiftMsg, GuardBuyMsg, MsgType, SuperChatMsg, UserActionMsg,
+    colors::USER_COLORS, DanmuMsg, GiftMsg, GuardBuyMsg, MsgType, SliderBarState, SuperChatMsg,
+    UserActionMsg,
 };
 
 #[derive(Clone)]
@@ -136,6 +137,19 @@ impl Tab {
         self.scroll() > 0 && area.height > content_length as u16
     }
 
+    fn block(&self, state: &CliState) -> Block {
+        Block::bordered()
+            .title({
+                if state.slider_bar_state == SliderBarState::Hiding {
+                    self.title()
+                } else {
+                    "".to_string()
+                }
+            })
+            .border_type(ratatui::widgets::BorderType::Rounded)
+            .padding(Padding::horizontal(1))
+    }
+
     fn render_all_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut CliState) {
         let text: Vec<Line<'static>> = state
             .messages
@@ -161,11 +175,7 @@ impl Tab {
         }
 
         Paragraph::new(text)
-            .block(
-                Block::bordered()
-                    .border_type(ratatui::widgets::BorderType::Rounded)
-                    .padding(Padding::horizontal(1)),
-            )
+            .block(self.block(state))
             .scroll((self.scroll(), 0))
             .render(area, buf);
 
@@ -201,11 +211,7 @@ impl Tab {
         }
 
         Paragraph::new(text)
-            .block(
-                Block::bordered()
-                    .border_type(ratatui::widgets::BorderType::Rounded)
-                    .padding(Padding::horizontal(1)),
-            )
+            .block(self.block(state))
             .scroll((self.scroll(), 0))
             .render(area, buf);
 
@@ -241,11 +247,7 @@ impl Tab {
         }
 
         Paragraph::new(text)
-            .block(
-                Block::bordered()
-                    .border_type(ratatui::widgets::BorderType::Rounded)
-                    .padding(Padding::horizontal(1)),
-            )
+            .block(self.block(state))
             .scroll((self.scroll(), 0))
             .render(area, buf);
 
@@ -281,11 +283,7 @@ impl Tab {
         }
 
         Paragraph::new(text)
-            .block(
-                Block::bordered()
-                    .border_type(ratatui::widgets::BorderType::Rounded)
-                    .padding(Padding::horizontal(1)),
-            )
+            .block(self.block(state))
             .scroll((self.scroll(), 0))
             .render(area, buf);
 
@@ -321,11 +319,7 @@ impl Tab {
         }
 
         Paragraph::new(text)
-            .block(
-                Block::bordered()
-                    .border_type(ratatui::widgets::BorderType::Rounded)
-                    .padding(Padding::horizontal(1)),
-            )
+            .block(self.block(state))
             .scroll((self.scroll(), 0))
             .render(area, buf);
 
@@ -361,11 +355,7 @@ impl Tab {
         }
 
         Paragraph::new(text)
-            .block(
-                Block::bordered()
-                    .border_type(ratatui::widgets::BorderType::Rounded)
-                    .padding(Padding::horizontal(1)),
-            )
+            .block(self.block(state))
             .scroll((self.scroll(), 0))
             .render(area, buf);
 
@@ -624,7 +614,10 @@ impl Tab {
                     Span::raw(" "),
                     Span::from(format!("*{:2}!", msg.amount)),
                     Span::raw(" "),
-                    Span::from(format!("({:.1} 元)", msg.price as f32 / 1000.0)),
+                    Span::from(format!(
+                        "({:.1} 元)",
+                        (msg.price * msg.amount) as f32 / 1000.0
+                    )),
                     {
                         if let Some(master) = msg.send_master {
                             Span::from(format!(" 给 {}", master.uname))

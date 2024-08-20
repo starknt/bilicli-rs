@@ -6,6 +6,8 @@ use ratatui::{
     widgets::{block::Title, Block, Padding, Paragraph},
 };
 
+use unicode_width::UnicodeWidthStr;
+
 use crate::CliState;
 
 use super::{colors::USER_COLORS, MsgType, UserActionMsg};
@@ -17,18 +19,6 @@ impl StatefulWidget for &mut Footer {
     type State = CliState;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let [left, right] = Layout::horizontal([Constraint::Percentage(40), Constraint::Fill(1)])
-            .flex(layout::Flex::SpaceBetween)
-            .areas(area);
-
-        let [info_area, watcher_area, attention_area] = Layout::horizontal([
-            Constraint::Fill(1),
-            Constraint::Length(14),
-            Constraint::Length(14),
-        ])
-        .flex(layout::Flex::SpaceBetween)
-        .areas(right);
-
         let enter = state
             .messages
             .iter()
@@ -39,7 +29,7 @@ impl StatefulWidget for &mut Footer {
             })
             .last();
 
-        let text = {
+        let enter_text = {
             if let Some(enter) = enter {
                 let (_, msg) = enter;
                 let msg = serde_json::from_str::<UserActionMsg>(msg).unwrap();
@@ -123,7 +113,36 @@ impl StatefulWidget for &mut Footer {
             }
         };
 
-        Paragraph::new(text)
+        let enter_text_width = enter_text.width() + 4;
+
+        let [left, right] = Layout::horizontal([Constraint::Fill(1), Constraint::Min(60)])
+            .flex(layout::Flex::SpaceBetween)
+            .areas(area);
+
+        let [left, right] = {
+            if (enter_text_width as u16) < left.width {
+                [left, right]
+            } else {
+                Layout::horizontal([Constraint::Length(0), Constraint::Fill(1)])
+                    .flex(layout::Flex::SpaceBetween)
+                    .areas(area)
+            }
+        };
+
+        let watcher_text = format!("👀 {}", small_num_text(state.watchers));
+        let attention_text = format!("🔥 {}", small_num_text(state.attention));
+        let watcher_text_width = watcher_text.width() + 4;
+        let attention_text_width = attention_text.width() + 4;
+
+        let [info_area, watcher_area, attention_area] = Layout::horizontal([
+            Constraint::Fill(1),
+            Constraint::Length(watcher_text_width as u16),
+            Constraint::Length(attention_text_width as u16),
+        ])
+        .flex(layout::Flex::SpaceBetween)
+        .areas(right);
+
+        Paragraph::new(enter_text)
             .block(
                 Block::bordered()
                     .border_type(ratatui::widgets::BorderType::Rounded)
@@ -177,29 +196,21 @@ impl StatefulWidget for &mut Footer {
             .render(info_area, buf);
         }
 
-        Paragraph::new(Line::from(
-            format!("👀 {}", small_num_text(state.watchers))
-                .fg(Color::LightGreen)
-                .bold(),
-        ))
-        .block(
-            Block::bordered()
-                .border_type(ratatui::widgets::BorderType::Rounded)
-                .padding(Padding::horizontal(1)),
-        )
-        .render(watcher_area, buf);
+        Paragraph::new(Line::from(watcher_text.fg(Color::LightGreen).bold()))
+            .block(
+                Block::bordered()
+                    .border_type(ratatui::widgets::BorderType::Rounded)
+                    .padding(Padding::horizontal(1)),
+            )
+            .render(watcher_area, buf);
 
-        Paragraph::new(Line::from(
-            format!("🔥 {}", small_num_text(state.attention))
-                .fg(Color::LightGreen)
-                .bold(),
-        ))
-        .block(
-            Block::bordered()
-                .border_type(ratatui::widgets::BorderType::Rounded)
-                .padding(Padding::horizontal(1)),
-        )
-        .render(attention_area, buf);
+        Paragraph::new(Line::from(attention_text.fg(Color::LightGreen).bold()))
+            .block(
+                Block::bordered()
+                    .border_type(ratatui::widgets::BorderType::Rounded)
+                    .padding(Padding::horizontal(1)),
+            )
+            .render(attention_area, buf);
     }
 }
 

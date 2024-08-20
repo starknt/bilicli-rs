@@ -37,6 +37,13 @@ pub enum InputMode {
     Editing,
 }
 
+#[derive(Default, PartialEq, Eq, Clone, Copy, Debug)]
+pub enum SliderBarState {
+    #[default]
+    Normal,
+    Hiding,
+}
+
 #[cfg(feature = "platform-napi")]
 #[napi]
 #[derive(Debug, Display, FromRepr, EnumIter, PartialEq, Eq)]

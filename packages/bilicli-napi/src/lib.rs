@@ -37,6 +37,7 @@ use ratatui::crossterm::{
 };
 #[cfg(feature = "platform-napi")]
 use tokio::sync::Mutex;
+use ui::SliderBarState;
 
 pub mod api;
 pub mod app;
@@ -48,20 +49,6 @@ pub struct Cli {
     room_id: u32,
     app: Arc<Mutex<App>>,
     state: Arc<Mutex<CliState>>,
-}
-
-#[derive(Clone, Default, Debug)]
-pub struct CliState {
-    pub state: AppState,
-    pub room_id: u32,
-    pub attention: u32,
-    pub watchers: u32,
-    pub is_live: bool,
-    pub start_time: NaiveDateTime,
-    pub area_name: String,
-    pub parent_area_name: String,
-    pub title: String,
-    pub messages: Vec<(MsgType, String)>,
 }
 
 #[cfg(feature = "platform-napi")]
@@ -182,6 +169,21 @@ pub fn init_panic_hook() {
         let _ = execute!(stdout(), LeaveAlternateScreen, DisableMouseCapture);
         original_hook(panic_info);
     }));
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct CliState {
+    pub slider_bar_state: SliderBarState,
+    pub state: AppState,
+    pub room_id: u32,
+    pub attention: u32,
+    pub watchers: u32,
+    pub is_live: bool,
+    pub start_time: NaiveDateTime,
+    pub area_name: String,
+    pub parent_area_name: String,
+    pub title: String,
+    pub messages: Vec<(MsgType, String)>,
 }
 
 impl CliState {

@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 use crate::{
-    ui::{footer::Footer, header::Header, tabs::Tabs, AppState, InputMode},
+    ui::{footer::Footer, header::Header, tabs::Tabs, AppState, InputMode, SliderBarState},
     CliState,
 };
 use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind};
@@ -82,23 +82,16 @@ impl App {
                         match key.code {
                             KeyCode::Up => self.previous_tab(),
                             KeyCode::Down => self.next_tab(),
-                            KeyCode::Char('w') => {
-                                self.scroll_up();
-                            }
-                            KeyCode::Char('s') => {
-                                self.scroll_down();
-                            }
+                            KeyCode::Char('w') => self.scroll_up(),
+                            KeyCode::Char('s') => self.scroll_down(),
                             KeyCode::Char('q') => self.quit(state),
-                            KeyCode::Char('y') => {
-                                if state.state == AppState::Quitting {
-                                    state.state = AppState::Quit;
-                                }
+                            KeyCode::Char('y') if state.state == AppState::Quitting => {
+                                state.state = AppState::Quit
                             }
-                            KeyCode::Char('n') => {
-                                if state.state == AppState::Quitting {
-                                    state.state = AppState::Running;
-                                }
+                            KeyCode::Char('n') if state.state == AppState::Quitting => {
+                                state.state = AppState::Running;
                             }
+                            KeyCode::Char('t') => self.toggle_slider_bar(state),
                             KeyCode::Enter => {
                                 self.input_mode = InputMode::Editing;
                                 self.textarea
@@ -139,6 +132,13 @@ impl App {
             }
         }
         Ok(())
+    }
+
+    pub fn toggle_slider_bar(&mut self, state: &mut CliState) {
+        state.slider_bar_state = match state.slider_bar_state {
+            SliderBarState::Normal => SliderBarState::Hiding,
+            SliderBarState::Hiding => SliderBarState::Normal,
+        };
     }
 
     pub fn scroll_up(&mut self) {
@@ -188,12 +188,25 @@ impl StatefulWidget for &mut App {
             Constraint::Length(3),
         ]);
 
-        let horizontal: Layout = Layout::horizontal([Constraint::Length(8), Constraint::Fill(1)]);
+        let horizontal: Layout = {
+            if state.slider_bar_state == SliderBarState::Normal {
+                Layout::horizontal([Constraint::Length(8), Constraint::Fill(1)])
+            } else {
+                Layout::horizontal([Constraint::Length(0), Constraint::Fill(1)])
+            }
+        };
+
         let [header_area, inner_area, footer_area] = vertical.areas(root);
         let [tabs_area, content_area] = horizontal.areas(inner_area);
+
         self.header.render(header_area, buf, state);
-        self.render_tabs(tabs_area, buf);
+
+        if state.slider_bar_state == SliderBarState::Normal {
+            self.render_tabs(tabs_area, buf);
+        }
+
         self.render_selected_tab(content_area, buf, state);
+
         if self.input_mode == InputMode::Editing {
             self.render_input(footer_area, buf);
         } else {
