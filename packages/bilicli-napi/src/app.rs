@@ -3,7 +3,10 @@
 use std::time::Duration;
 
 use crate::{
-    ui::{footer::Footer, header::Header, tabs::Tabs, AppState, InputMode, SliderBarState},
+    ui::{
+        footer::Footer, header::Header, helper::centered_rect, tabs::Tabs, AppState, InputMode,
+        SliderBarState,
+    },
     CliState,
 };
 use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind};
@@ -80,19 +83,27 @@ impl App {
                 InputMode::Normal => {
                     if key.kind == KeyEventKind::Press {
                         match key.code {
-                            KeyCode::Up => self.previous_tab(),
-                            KeyCode::Down => self.next_tab(),
-                            KeyCode::Char('w') => self.scroll_up(),
-                            KeyCode::Char('s') => self.scroll_down(),
-                            KeyCode::Char('q') => self.quit(state),
+                            KeyCode::Up if state.state == AppState::Running => self.previous_tab(),
+                            KeyCode::Down if state.state == AppState::Running => self.next_tab(),
+                            KeyCode::Char('w') if state.state == AppState::Running => {
+                                self.scroll_up()
+                            }
+                            KeyCode::Char('s') if state.state == AppState::Running => {
+                                self.scroll_down()
+                            }
+                            KeyCode::Char('q') if state.state == AppState::Running => {
+                                self.quit(state)
+                            }
                             KeyCode::Char('y') if state.state == AppState::Quitting => {
                                 state.state = AppState::Quit
                             }
                             KeyCode::Char('n') if state.state == AppState::Quitting => {
                                 state.state = AppState::Running;
                             }
-                            KeyCode::Char('t') => self.toggle_slider_bar(state),
-                            KeyCode::Enter => {
+                            KeyCode::Char('t') if state.state == AppState::Running => {
+                                self.toggle_slider_bar(state)
+                            }
+                            KeyCode::Enter if state.state == AppState::Running => {
                                 self.input_mode = InputMode::Editing;
                                 self.textarea
                                     .set_style(Style::default().fg(Color::LightGreen));
@@ -217,16 +228,28 @@ impl StatefulWidget for &mut App {
 
 impl App {
     fn render_quit_question(&self, area: Rect, buf: &mut Buffer) {
-        let block = Block::new()
-            .title(Line::raw("Quit?").centered())
-            .borders(Borders::TOP)
-            .border_set(symbols::border::EMPTY)
-            .padding(Padding::horizontal(1));
+        let area = centered_rect(80, 15, area);
+        let block = Block::bordered()
+            .title(" 提示 ")
+            .title_alignment(Alignment::Center)
+            .border_set(symbols::border::ROUNDED)
+            .border_style(Style::default().fg(tailwind::ORANGE.c400))
+            .padding(Padding::uniform(1));
 
-        Paragraph::new("Are you sure you want to quit?(Y/N)".bold())
-            .block(block)
-            .wrap(Wrap { trim: true })
-            .render(area, buf);
+        Paragraph::new(vec![
+            Line::from("你确定要退出吗?".bold()).centered(),
+            Line::raw(""),
+            Line::raw(""),
+            Line::from(vec![
+                Span::from("确定 (按 Y/y)").bold().fg(tailwind::ORANGE.c300),
+                Span::raw("    "),
+                Span::from("取消 (按 N/n)").bold().fg(tailwind::RED.c300),
+            ])
+            .centered(),
+        ])
+        .block(block)
+        .wrap(Wrap { trim: true })
+        .render(area, buf);
     }
 
     fn render_tabs(&mut self, area: Rect, buf: &mut Buffer) {

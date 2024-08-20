@@ -4,7 +4,7 @@ use chrono::{DateTime, Local, TimeZone};
 use ratatui::{
     prelude::*,
     style::palette::tailwind,
-    widgets::{Block, ListState, Padding, Paragraph, Scrollbar, ScrollbarState},
+    widgets::{block::Title, Block, ListState, Padding, Paragraph, Scrollbar, ScrollbarState},
 };
 
 use crate::CliState;
@@ -141,9 +141,9 @@ impl Tab {
         Block::bordered()
             .title({
                 if state.slider_bar_state == SliderBarState::Hiding {
-                    self.title()
+                    Title::from(self.title()).alignment(Alignment::Center)
                 } else {
-                    "".to_string()
+                    Title::from("")
                 }
             })
             .border_type(ratatui::widgets::BorderType::Rounded)
