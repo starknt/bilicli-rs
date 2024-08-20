@@ -154,12 +154,8 @@ impl Tab {
 
         self.set_state_content_length(content_length);
 
-        if self.should_scroll_down(text.len(), &area) {
+        while self.should_scroll_down(text.len(), &area) {
             self.scroll_down();
-        }
-
-        if self.should_scroll_up(&area, text.len()) {
-            self.scroll_up();
         }
 
         Paragraph::new(text)
@@ -198,12 +194,8 @@ impl Tab {
 
         self.set_state_content_length(content_length);
 
-        if self.should_scroll_down(text.len(), &area) {
+        while self.should_scroll_down(text.len(), &area) {
             self.scroll_down();
-        }
-
-        if self.should_scroll_up(&area, text.len()) {
-            self.scroll_up();
         }
 
         Paragraph::new(text)
@@ -242,12 +234,8 @@ impl Tab {
 
         self.set_state_content_length(content_length);
 
-        if self.should_scroll_down(text.len(), &area) {
+        while self.should_scroll_down(text.len(), &area) {
             self.scroll_down();
-        }
-
-        if self.should_scroll_up(&area, text.len()) {
-            self.scroll_up();
         }
 
         Paragraph::new(text)
@@ -286,12 +274,8 @@ impl Tab {
 
         self.set_state_content_length(content_length);
 
-        if self.should_scroll_down(text.len(), &area) {
+        while self.should_scroll_down(text.len(), &area) {
             self.scroll_down();
-        }
-
-        if self.should_scroll_up(&area, text.len()) {
-            self.scroll_up();
         }
 
         Paragraph::new(text)
@@ -330,12 +314,8 @@ impl Tab {
 
         self.set_state_content_length(content_length);
 
-        if self.should_scroll_down(text.len(), &area) {
+        while self.should_scroll_down(text.len(), &area) {
             self.scroll_down();
-        }
-
-        if self.should_scroll_up(&area, text.len()) {
-            self.scroll_up();
         }
 
         Paragraph::new(text)
@@ -374,12 +354,8 @@ impl Tab {
 
         self.set_state_content_length(content_length);
 
-        if self.should_scroll_down(text.len(), &area) {
+        while self.should_scroll_down(text.len(), &area) {
             self.scroll_down();
-        }
-
-        if self.should_scroll_up(&area, text.len()) {
-            self.scroll_up();
         }
 
         Paragraph::new(text)
@@ -734,11 +710,10 @@ impl Tab {
                         Span::from(msg.user.uname).bold().fg(color)
                     },
                     Span::raw(": "),
-                    Span::from(format!("(¥ {})", msg.price / 1000)),
                     Span::from(format!("在你的直播间购买了{}", msg.gift_name))
                         .fg(tailwind::GREEN.c400),
                     Span::raw(" "),
-                    Span::from(format!("(¥ {})", msg.price / 1000)),
+                    Span::from(format!("( {} 元)", msg.price)),
                 ])
             }
             MsgType::UserAction => {
