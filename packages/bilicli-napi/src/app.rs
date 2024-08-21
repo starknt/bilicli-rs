@@ -264,7 +264,7 @@ impl App {
 
     fn render_tabs(&mut self, area: Rect, buf: &mut Buffer) {
         let highlight_style = Style::default()
-            .bg(tailwind::YELLOW.c400)
+            .bg(tailwind::YELLOW.c300)
             .fg(tailwind::BLACK)
             .bold();
         let block = Block::bordered()
