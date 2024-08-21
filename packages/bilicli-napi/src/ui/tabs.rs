@@ -814,6 +814,26 @@ pub struct Tabs {
     pub state: ListState,
 }
 
+impl Tabs {
+    pub fn next_tab(&mut self) {
+        let selected = self.state.selected().unwrap();
+        if selected + 1 < self.tabs.len() {
+            self.state.select(Some(selected + 1));
+        } else {
+            self.state.select(Some(0));
+        }
+    }
+
+    pub fn previous_tab(&mut self) {
+        let selected = self.state.selected().unwrap();
+        if selected > 0 {
+            self.state.select(Some(selected - 1));
+        } else {
+            self.state.select(Some(self.tabs.len() - 1));
+        }
+    }
+}
+
 impl fmt::Debug for Tabs {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Tabs").finish()

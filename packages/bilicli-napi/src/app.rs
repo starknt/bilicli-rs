@@ -22,7 +22,7 @@ pub const MAX_INPUT_LENGTH: usize = 40;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct App {
     pub input_mode: InputMode,
     header: Header,
@@ -35,17 +35,6 @@ pub struct App {
 unsafe impl Send for App {}
 
 impl App {
-    pub fn new(_: u32) -> Self {
-        Self {
-            textarea: TextArea::default(),
-            input_mode: InputMode::Normal,
-            header: Header,
-            footer: Footer,
-            tabs: Tabs::default(),
-            will_send_message: vec![],
-        }
-    }
-
     const FRAMES_PER_SECOND: f32 = 120.0;
 
     pub async fn run(
@@ -70,9 +59,7 @@ impl App {
         terminal: &mut Terminal<impl Backend>,
         state: &mut CliState,
     ) -> crate::app::Result<()> {
-        terminal.draw(|f| {
-            f.render_stateful_widget(self, f.area(), state);
-        })?;
+        terminal.draw(|f| f.render_stateful_widget(self, f.area(), state))?;
 
         Ok(())
     }
@@ -91,9 +78,7 @@ impl App {
                             KeyCode::Char('s') if state.state == AppState::Running => {
                                 self.scroll_down()
                             }
-                            KeyCode::Char('q') if state.state == AppState::Running => {
-                                self.quit(state)
-                            }
+                            KeyCode::Char('q') if state.state == AppState::Running => state.quit(),
                             KeyCode::Char('y') if state.state == AppState::Quitting => {
                                 state.state = AppState::Quit
                             }
@@ -163,34 +148,11 @@ impl App {
     }
 
     pub fn next_tab(&mut self) {
-        let selected = self.tabs.state.selected().unwrap();
-        if selected + 1 < self.tabs.tabs.len() {
-            self.tabs.state.select(Some(selected + 1));
-        } else {
-            self.tabs.state.select(Some(0));
-        }
+        self.tabs.next_tab();
     }
 
     pub fn previous_tab(&mut self) {
-        let selected = self.tabs.state.selected().unwrap();
-        if selected > 0 {
-            self.tabs.state.select(Some(selected - 1));
-        } else {
-            self.tabs.state.select(Some(self.tabs.tabs.len() - 1));
-        }
-    }
-
-    pub fn quit(&mut self, state: &mut CliState) {
-        if state.state == AppState::Quit {
-            return;
-        }
-
-        if state.state == AppState::Quitting {
-            state.state = AppState::Quit;
-            return;
-        }
-
-        state.state = AppState::Quitting;
+        self.tabs.previous_tab();
     }
 }
 

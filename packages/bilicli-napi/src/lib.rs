@@ -56,7 +56,7 @@ pub struct Cli {
 impl Cli {
     #[napi(constructor)]
     pub fn new(room_id: u32) -> Result<Self> {
-        let app = App::new(room_id);
+        let app = App::default();
 
         Ok(Self {
             room_id,
@@ -187,6 +187,19 @@ pub struct CliState {
 }
 
 impl CliState {
+    pub fn quit(&mut self) {
+        if self.state == AppState::Quit {
+            return;
+        }
+
+        if self.state == AppState::Quitting {
+            self.state = AppState::Quit;
+            return;
+        }
+
+        self.state = AppState::Quitting;
+    }
+
     pub fn update_info(&mut self, info: RoomInfo) {
         self.area_name = info.area_name;
         self.parent_area_name = info.parent_area_name;
