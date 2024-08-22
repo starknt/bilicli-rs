@@ -14,9 +14,16 @@ pub async fn send_danmu(room_id: u32, content: &str, cookie: String) -> Result<(
     headers.insert(COOKIE, HeaderValue::from_str(&cookie).unwrap());
 
     let kv: Vec<&str> = cookie.split("; ").collect::<Vec<&str>>();
-    let cookie = kv.iter().find(|s| s.starts_with("bili_jct=")).unwrap();
-    let cookie = cookie.split("=").nth(1).unwrap().to_string();
-    eprintln!("content: {}", content);
+    let cookie = if let Some(cookie) = kv.iter().find(|s| s.starts_with("bili_jct=")) {
+        if let Some(cookie) = cookie.split("=").nth(1) {
+            cookie.to_string()
+        } else {
+            return Err("无法找到 csrf token".to_string());
+        }
+    } else {
+        return Err("无法找到 csrf token".to_string());
+    };
+
     let mut params = HashMap::new();
     params.insert("csrf", cookie.to_string());
     params.insert("csrf_token", cookie.to_string());
