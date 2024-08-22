@@ -5,7 +5,7 @@ use ratatui::{
 
 use crate::CliState;
 
-#[derive(Clone, Default, Debug)]
+#[derive(Default, Debug)]
 pub struct Header;
 
 impl StatefulWidget for &Header {

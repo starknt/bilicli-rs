@@ -1,17 +1,19 @@
-use std::{fmt, str::FromStr};
+use std::fmt;
 
-use chrono::{DateTime, Local, TimeZone};
+use chrono::{DateTime, Local, TimeZone, Utc};
 use ratatui::{
     prelude::*,
-    style::palette::tailwind,
     widgets::{block::Title, Block, ListState, Padding, Paragraph, Scrollbar, ScrollbarState},
 };
 
 use crate::CliState;
 
 use super::{
-    colors::USER_COLORS, DanmuMsg, GiftMsg, GuardBuyMsg, MsgType, SliderBarState, SuperChatMsg,
-    UserActionMsg,
+    helper::{
+        render_danmu_message, render_gift_message, render_guard_buy_message,
+        render_super_chat_message, render_user_action_message,
+    },
+    DanmuMsg, GiftMsg, GuardBuyMsg, MsgType, SliderBarState, SuperChatMsg, UserActionMsg,
 };
 
 #[derive(Clone)]
@@ -371,444 +373,62 @@ impl Tab {
     fn render_msg(t: MsgType, b: String, render_type: bool) -> Line<'static> {
         match t {
             MsgType::Danmu => {
-                let msg = serde_json::from_str::<DanmuMsg>(&b).unwrap();
-                let time = get_local_time_from_timestamp(msg.timestamp);
+                if let Ok(msg) = serde_json::from_str::<DanmuMsg>(&b) {
+                    let time = get_local_time_from_timestamp(msg.timestamp);
 
-                Line::from(vec![
-                    Span::from(format!("{}", time.format("%H:%M:%S")))
-                        .fg(Color::from_hsl(0.0, 0.0, 40.0)),
-                    {
-                        if render_type {
-                            Span::from(format!(" [{}] ", t))
-                                .fg(Color::LightYellow)
-                                .not_bold()
-                        } else {
-                            Span::raw(" ")
-                        }
-                    },
-                    {
-                        if let Some(ref badge) = msg.user.badge {
-                            let color = {
-                                if let Some(ref anchor) = badge.anchor {
-                                    if let Some(is_same_room) = anchor.is_same_room {
-                                        if is_same_room {
-                                            Color::from_str(&badge.color).unwrap()
-                                        } else {
-                                            Color::from_str("#666666").unwrap()
-                                        }
-                                    } else {
-                                        Color::from_str("#666666").unwrap()
-                                    }
-                                } else {
-                                    Color::from_str("#666666").unwrap()
-                                }
-                            };
-
-                            Span::from(format!(" {} ", badge.name)).bg(color)
-                        } else {
-                            Span::raw("")
-                        }
-                    },
-                    {
-                        if let Some(ref badge) = msg.user.badge {
-                            let color = {
-                                if let Some(ref anchor) = badge.anchor {
-                                    if let Some(is_same_room) = anchor.is_same_room {
-                                        if is_same_room {
-                                            Color::from_str(&badge.color).unwrap()
-                                        } else {
-                                            Color::from_str("#666666").unwrap()
-                                        }
-                                    } else {
-                                        Color::from_str("#666666").unwrap()
-                                    }
-                                } else {
-                                    Color::from_str("#666666").unwrap()
-                                }
-                            };
-
-                            Span::from(format!(" {} ", badge.level))
-                                .fg(color)
-                                .bg(Color::White)
-                        } else {
-                            Span::raw("")
-                        }
-                    },
-                    Span::raw(" "),
-                    {
-                        let color = {
-                            if let Some(identity) = msg.user.identity {
-                                let index = identity.guard_level as usize % USER_COLORS.len();
-                                Color::from_str(USER_COLORS[index]).unwrap()
-                            } else {
-                                Color::from_str(USER_COLORS[0]).unwrap()
-                            }
-                        };
-
-                        Span::from(msg.user.uname).bold().fg(color)
-                    },
-                    Span::raw(": "),
-                    Span::from(replace_emoji_to_unicode(&msg.content)),
-                ])
+                    render_danmu_message(msg, time, render_type)
+                } else {
+                    Line::from(vec![Span::from("解析弹幕消息失败")])
+                        .red()
+                        .bold()
+                }
             }
             MsgType::SuperChat => {
-                let msg = serde_json::from_str::<SuperChatMsg>(&b).unwrap();
-                let time = get_local_time_from_timestamp(msg.timestamp);
+                if let Ok(msg) = serde_json::from_str::<SuperChatMsg>(&b) {
+                    let time = get_local_time_from_timestamp(msg.timestamp);
 
-                Line::from(vec![
-                    Span::from(format!("{}", time.format("%H:%M:%S")))
-                        .fg(Color::from_hsl(0.0, 0.0, 40.0)),
-                    {
-                        if render_type {
-                            Span::from(format!(" [{}] ", t)).fg(Color::Yellow)
-                        } else {
-                            Span::raw(" ")
-                        }
-                    },
-                    {
-                        if let Some(ref badge) = msg.user.badge {
-                            let color = {
-                                if let Some(ref anchor) = badge.anchor {
-                                    if let Some(is_same_room) = anchor.is_same_room {
-                                        if is_same_room {
-                                            Color::from_str(&badge.color).unwrap()
-                                        } else {
-                                            Color::from_str("#666666").unwrap()
-                                        }
-                                    } else {
-                                        Color::from_str("#666666").unwrap()
-                                    }
-                                } else {
-                                    Color::from_str("#666666").unwrap()
-                                }
-                            };
-
-                            Span::from(format!(" {} ", badge.name)).bg(color)
-                        } else {
-                            Span::raw("")
-                        }
-                    },
-                    {
-                        if let Some(ref badge) = msg.user.badge {
-                            let color = {
-                                if let Some(ref anchor) = badge.anchor {
-                                    if let Some(is_same_room) = anchor.is_same_room {
-                                        if is_same_room {
-                                            Color::from_str(&badge.color).unwrap()
-                                        } else {
-                                            Color::from_str("#666666").unwrap()
-                                        }
-                                    } else {
-                                        Color::from_str("#666666").unwrap()
-                                    }
-                                } else {
-                                    Color::from_str("#666666").unwrap()
-                                }
-                            };
-
-                            Span::from(format!(" {} ", badge.level))
-                                .fg(color)
-                                .bg(Color::White)
-                        } else {
-                            Span::raw("")
-                        }
-                    },
-                    Span::raw(" "),
-                    {
-                        let color = {
-                            if let Some(identity) = msg.user.identity {
-                                let index = identity.guard_level as usize % USER_COLORS.len();
-                                Color::from_str(USER_COLORS[index]).unwrap()
-                            } else {
-                                Color::from_str(USER_COLORS[0]).unwrap()
-                            }
-                        };
-
-                        Span::from(msg.user.uname).bold().fg(color)
-                    },
-                    Span::raw(": "),
-                    Span::from(format!("({} 元)", msg.price)),
-                    Span::raw(" "),
-                    Span::from(msg.content),
-                ])
+                    render_super_chat_message(msg, time, render_type)
+                } else {
+                    Line::from(vec![Span::from("解析SC消息失败")]).red().bold()
+                }
             }
             MsgType::Gift => {
-                let msg = serde_json::from_str::<GiftMsg>(&b).unwrap();
-                let time = get_local_time_from_timestamp(msg.timestamp);
+                if let Ok(msg) = serde_json::from_str::<GiftMsg>(&b) {
+                    let time = get_local_time_from_timestamp(msg.timestamp);
 
-                Line::from(vec![
-                    Span::from(format!("{}", time.format("%H:%M:%S")))
-                        .fg(Color::from_hsl(0.0, 0.0, 40.0)),
-                    {
-                        if render_type {
-                            Span::from(format!(" [{}] ", t)).fg(Color::Yellow)
-                        } else {
-                            Span::raw(" ")
-                        }
-                    },
-                    {
-                        if let Some(ref badge) = msg.user.badge {
-                            let color = {
-                                if let Some(ref anchor) = badge.anchor {
-                                    if let Some(is_same_room) = anchor.is_same_room {
-                                        if is_same_room {
-                                            Color::from_str(&badge.color).unwrap()
-                                        } else {
-                                            Color::from_str("#666666").unwrap()
-                                        }
-                                    } else {
-                                        Color::from_str("#666666").unwrap()
-                                    }
-                                } else {
-                                    Color::from_str("#666666").unwrap()
-                                }
-                            };
-
-                            Span::from(format!(" {} ", badge.name)).bg(color)
-                        } else {
-                            Span::raw("")
-                        }
-                    },
-                    {
-                        if let Some(ref badge) = msg.user.badge {
-                            let color = {
-                                if let Some(ref anchor) = badge.anchor {
-                                    if let Some(is_same_room) = anchor.is_same_room {
-                                        if is_same_room {
-                                            Color::from_str(&badge.color).unwrap()
-                                        } else {
-                                            Color::from_str("#666666").unwrap()
-                                        }
-                                    } else {
-                                        Color::from_str("#666666").unwrap()
-                                    }
-                                } else {
-                                    Color::from_str("#666666").unwrap()
-                                }
-                            };
-
-                            Span::from(format!(" {} ", badge.level))
-                                .fg(color)
-                                .bg(Color::White)
-                        } else {
-                            Span::raw("")
-                        }
-                    },
-                    Span::raw(" "),
-                    {
-                        let color = {
-                            if let Some(identity) = msg.user.identity {
-                                let index = identity.guard_level as usize % USER_COLORS.len();
-                                Color::from_str(USER_COLORS[index]).unwrap()
-                            } else {
-                                Color::from_str(USER_COLORS[0]).unwrap()
-                            }
-                        };
-
-                        Span::from(msg.user.uname).bold().fg(color)
-                    },
-                    Span::raw(": "),
-                    Span::from("赠送了"),
-                    Span::raw(" "),
-                    Span::from(msg.gift_name),
-                    Span::raw(" "),
-                    Span::from(format!("* {}", msg.amount)),
-                    Span::raw(" "),
-                    {
-                        let total = (msg.price * msg.amount) as f32 / 1000.0;
-
-                        if total == 0.0 {
-                            Span::raw("")
-                        } else {
-                            Span::from(format!("({:.1} 元)", total))
-                                .fg(Color::LightMagenta)
-                                .bold()
-                        }
-                    },
-                    {
-                        if let Some(master) = msg.send_master {
-                            Span::from(format!(" 给 {}", master.uname))
-                        } else {
-                            Span::raw("")
-                        }
-                    },
-                ])
+                    render_gift_message(msg, time, render_type)
+                } else {
+                    Line::from(vec![Span::from("解析礼物消息失败")])
+                        .red()
+                        .bold()
+                }
             }
             MsgType::GuardBuy => {
-                let msg = serde_json::from_str::<GuardBuyMsg>(&b).unwrap();
-                let time = get_local_time_from_timestamp(msg.timestamp);
+                if let Ok(msg) = serde_json::from_str::<GuardBuyMsg>(&b) {
+                    let time = get_local_time_from_timestamp(msg.timestamp);
 
-                Line::from(vec![
-                    Span::from(format!("{}", time.format("%H:%M:%S")))
-                        .fg(Color::from_hsl(0.0, 0.0, 40.0)),
-                    {
-                        if render_type {
-                            Span::from(format!(" [{}] ", t)).fg(Color::Yellow)
-                        } else {
-                            Span::raw(" ")
-                        }
-                    },
-                    {
-                        if let Some(ref badge) = msg.user.badge {
-                            let color = {
-                                if let Some(ref anchor) = badge.anchor {
-                                    if let Some(is_same_room) = anchor.is_same_room {
-                                        if is_same_room {
-                                            Color::from_str(&badge.color).unwrap()
-                                        } else {
-                                            Color::from_str("#666666").unwrap()
-                                        }
-                                    } else {
-                                        Color::from_str("#666666").unwrap()
-                                    }
-                                } else {
-                                    Color::from_str("#666666").unwrap()
-                                }
-                            };
-
-                            Span::from(format!(" {} ", badge.name)).bg(color)
-                        } else {
-                            Span::raw("")
-                        }
-                    },
-                    {
-                        if let Some(ref badge) = msg.user.badge {
-                            let color = {
-                                if let Some(ref anchor) = badge.anchor {
-                                    if let Some(is_same_room) = anchor.is_same_room {
-                                        if is_same_room {
-                                            Color::from_str(&badge.color).unwrap()
-                                        } else {
-                                            Color::from_str("#666666").unwrap()
-                                        }
-                                    } else {
-                                        Color::from_str("#666666").unwrap()
-                                    }
-                                } else {
-                                    Color::from_str("#666666").unwrap()
-                                }
-                            };
-
-                            Span::from(format!(" {} ", badge.level))
-                                .fg(color)
-                                .bg(Color::White)
-                        } else {
-                            Span::raw("")
-                        }
-                    },
-                    Span::raw(" "),
-                    {
-                        let color = {
-                            if let Some(identity) = msg.user.identity {
-                                let index = identity.guard_level as usize % USER_COLORS.len();
-                                Color::from_str(USER_COLORS[index]).unwrap()
-                            } else {
-                                Color::from_str(USER_COLORS[0]).unwrap()
-                            }
-                        };
-
-                        Span::from(msg.user.uname).bold().fg(color)
-                    },
-                    Span::raw(": "),
-                    Span::from("在你的直播间购买了"),
-                    Span::from(msg.gift_name).fg(tailwind::GREEN.c400).bold(),
-                    Span::raw(" "),
-                    Span::from(format!("({} 元)", msg.price / 1000)),
-                ])
+                    render_guard_buy_message(msg, time, render_type)
+                } else {
+                    Line::from(vec![Span::from("解析上舰消息失败")])
+                        .red()
+                        .bold()
+                }
             }
             MsgType::UserAction => {
-                let msg = serde_json::from_str::<UserActionMsg>(&b).unwrap();
-                let time = get_local_time_from_timestamp(msg.timestamp);
+                if let Ok(msg) = serde_json::from_str::<UserActionMsg>(&b) {
+                    let time = get_local_time_from_timestamp(msg.timestamp);
 
-                Line::from(vec![
-                    Span::from(format!("{}", time.format("%H:%M:%S")))
-                        .fg(Color::from_hsl(0.0, 0.0, 40.0)),
-                    {
-                        if render_type {
-                            Span::from(format!(" [{}] ", t)).fg(Color::Yellow)
-                        } else {
-                            Span::raw(" ")
-                        }
-                    },
-                    {
-                        if let Some(ref badge) = msg.user.badge {
-                            let color = {
-                                if let Some(ref anchor) = badge.anchor {
-                                    if let Some(is_same_room) = anchor.is_same_room {
-                                        if is_same_room {
-                                            Color::from_str(&badge.color).unwrap()
-                                        } else {
-                                            Color::from_str("#666666").unwrap()
-                                        }
-                                    } else {
-                                        Color::from_str("#666666").unwrap()
-                                    }
-                                } else {
-                                    Color::from_str("#666666").unwrap()
-                                }
-                            };
-
-                            Span::from(format!(" {} ", badge.name)).bg(color)
-                        } else {
-                            Span::raw("")
-                        }
-                    },
-                    {
-                        if let Some(ref badge) = msg.user.badge {
-                            let color = {
-                                if let Some(ref anchor) = badge.anchor {
-                                    if let Some(is_same_room) = anchor.is_same_room {
-                                        if is_same_room {
-                                            Color::from_str(&badge.color).unwrap()
-                                        } else {
-                                            Color::from_str("#666666").unwrap()
-                                        }
-                                    } else {
-                                        Color::from_str("#666666").unwrap()
-                                    }
-                                } else {
-                                    Color::from_str("#666666").unwrap()
-                                }
-                            };
-
-                            Span::from(format!(" {} ", badge.level))
-                                .fg(color)
-                                .bg(Color::White)
-                        } else {
-                            Span::raw("")
-                        }
-                    },
-                    Span::raw(" "),
-                    {
-                        let color = {
-                            if let Some(identity) = msg.user.identity {
-                                let index = identity.guard_level as usize % USER_COLORS.len();
-                                Color::from_str(USER_COLORS[index]).unwrap()
-                            } else {
-                                Color::from_str(USER_COLORS[0]).unwrap()
-                            }
-                        };
-
-                        Span::from(msg.user.uname).bold().fg(color)
-                    },
-                    Span::raw(": "),
-                    {
-                        match msg.action.as_str() {
-                            "enter" => Span::from("进入"),
-                            "follow" => Span::from("关注"),
-                            "share" => Span::from("分享"),
-                            "like" => Span::from("点赞"),
-                            _ => Span::raw(""),
-                        }
-                    },
-                    Span::from("直播间"),
-                ])
+                    render_user_action_message(msg, time, render_type)
+                } else {
+                    Line::from(vec![Span::from("解析用户操作消息失败")])
+                        .red()
+                        .bold()
+                }
             }
         }
     }
 }
 
-#[derive(Clone)]
 pub struct Tabs {
     pub tabs: Vec<Tab>,
     pub state: ListState,
@@ -860,16 +480,7 @@ impl Default for Tabs {
 }
 
 fn get_local_time_from_timestamp(timestamp: i64) -> DateTime<Local> {
-    let time = DateTime::from_timestamp_millis(timestamp).unwrap();
+    let time = DateTime::from_timestamp_millis(timestamp).unwrap_or(Utc::now());
     let time = time.naive_local();
     Local.from_utc_datetime(&time)
-}
-
-fn replace_emoji_to_unicode(emoji_str: &str) -> String {
-    emoji_str
-        .replace("[dog]", "🐶")
-        .replace("[手机]", "📱")
-        .replace("[花]", "🌹")
-        .replace("[吃瓜]", "")
-        .replace("[比心]", "❤️")
 }

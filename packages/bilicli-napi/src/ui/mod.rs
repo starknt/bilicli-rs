@@ -9,7 +9,6 @@ pub mod colors;
 pub mod footer;
 pub mod header;
 pub mod helper;
-pub mod hyper_link;
 pub mod tabs;
 
 #[cfg(feature = "platform-napi")]

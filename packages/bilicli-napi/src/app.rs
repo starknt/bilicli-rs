@@ -22,7 +22,7 @@ pub const MAX_INPUT_LENGTH: usize = 40;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct App {
     pub input_mode: InputMode,
     header: Header,
@@ -138,13 +138,17 @@ impl App {
     }
 
     pub fn scroll_up(&mut self) {
-        let tab = &mut self.tabs.tabs[self.tabs.state.selected().unwrap()];
-        tab.scroll_up();
+        if let Some(index) = self.tabs.state.selected() {
+            let tab = &mut self.tabs.tabs[index];
+            tab.scroll_up();
+        }
     }
 
     pub fn scroll_down(&mut self) {
-        let tab = &mut self.tabs.tabs[self.tabs.state.selected().unwrap()];
-        tab.scroll_down();
+        if let Some(index) = self.tabs.state.selected() {
+            let tab = &mut self.tabs.tabs[index];
+            tab.scroll_down();
+        }
     }
 
     pub fn next_tab(&mut self) {
@@ -229,6 +233,7 @@ impl App {
             .bg(tailwind::YELLOW.c300)
             .fg(tailwind::BLACK)
             .bold();
+
         let block = Block::bordered()
             .border_type(ratatui::widgets::BorderType::Rounded)
             .padding(Padding::horizontal(1));
@@ -243,13 +248,19 @@ impl App {
         let list = List::new(tabs)
             .block(block)
             .highlight_style(highlight_style)
-            .highlight_spacing(ratatui::widgets::HighlightSpacing::Always);
+            .highlight_spacing(ratatui::widgets::HighlightSpacing::WhenSelected);
 
         StatefulWidget::render(list, area, buf, &mut self.tabs.state);
     }
 
     fn render_selected_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut CliState) {
-        let tab = &mut self.tabs.tabs[self.tabs.state.selected().unwrap()];
+        let tab = if let Some(index) = self.tabs.state.selected() {
+            &mut self.tabs.tabs[index]
+        } else {
+            self.tabs.state.select_first();
+            &mut self.tabs.tabs[0]
+        };
+
         tab.render(area, buf, state);
     }
 

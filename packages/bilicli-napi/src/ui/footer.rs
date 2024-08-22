@@ -12,7 +12,7 @@ use crate::CliState;
 
 use super::{colors::USER_COLORS, MsgType, UserActionMsg};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct Footer;
 
 impl StatefulWidget for &mut Footer {
@@ -24,90 +24,22 @@ impl StatefulWidget for &mut Footer {
             .iter()
             .filter(|(t, _)| *t == MsgType::UserAction)
             .filter(|(_, msg)| {
-                let msg = serde_json::from_str::<UserActionMsg>(msg).unwrap();
-                msg.action.as_str() == "enter"
+                if let Ok(msg) = serde_json::from_str::<UserActionMsg>(msg) {
+                    msg.action.as_str() == "enter"
+                } else {
+                    false
+                }
             })
             .last();
 
         let enter_text = {
             if let Some(enter) = enter {
                 let (_, msg) = enter;
-                let msg = serde_json::from_str::<UserActionMsg>(msg).unwrap();
-
-                Line::from(vec![
-                    {
-                        if let Some(ref badge) = msg.user.badge {
-                            let color = {
-                                if let Some(ref anchor) = badge.anchor {
-                                    if let Some(is_same_room) = anchor.is_same_room {
-                                        if is_same_room {
-                                            Color::from_str(&badge.color).unwrap()
-                                        } else {
-                                            Color::from_str("#666666").unwrap()
-                                        }
-                                    } else {
-                                        Color::from_str("#666666").unwrap()
-                                    }
-                                } else {
-                                    Color::from_str("#666666").unwrap()
-                                }
-                            };
-
-                            Span::from(format!(" {} ", badge.name)).bg(color)
-                        } else {
-                            Span::raw("")
-                        }
-                    },
-                    {
-                        if let Some(ref badge) = msg.user.badge {
-                            let color = {
-                                if let Some(ref anchor) = badge.anchor {
-                                    if let Some(is_same_room) = anchor.is_same_room {
-                                        if is_same_room {
-                                            Color::from_str(&badge.color).unwrap()
-                                        } else {
-                                            Color::from_str("#666666").unwrap()
-                                        }
-                                    } else {
-                                        Color::from_str("#666666").unwrap()
-                                    }
-                                } else {
-                                    Color::from_str("#666666").unwrap()
-                                }
-                            };
-
-                            Span::from(format!(" {} ", badge.level))
-                                .fg(color)
-                                .bg(Color::White)
-                        } else {
-                            Span::raw("")
-                        }
-                    },
-                    Span::raw(" "),
-                    {
-                        let color = {
-                            if let Some(identity) = msg.user.identity {
-                                let index = identity.guard_level as usize % USER_COLORS.len();
-                                Color::from_str(USER_COLORS[index]).unwrap()
-                            } else {
-                                Color::from_str(USER_COLORS[0]).unwrap()
-                            }
-                        };
-
-                        Span::from(msg.user.uname).bold().fg(color)
-                    },
-                    Span::raw(": "),
-                    {
-                        match msg.action.as_str() {
-                            "enter" => Span::from("进入"),
-                            "follow" => Span::from("关注"),
-                            "share" => Span::from("分享"),
-                            "like" => Span::from("点赞"),
-                            _ => Span::raw(""),
-                        }
-                    },
-                    Span::from("直播间"),
-                ])
+                if let Ok(msg) = serde_json::from_str::<UserActionMsg>(msg) {
+                    render_enter_text(msg)
+                } else {
+                    Line::from("按 Enter 输入弹幕信息, Esc 取消输入")
+                }
             } else {
                 Line::from("按 Enter 输入弹幕信息, Esc 取消输入")
             }
@@ -169,14 +101,18 @@ impl StatefulWidget for &mut Footer {
                     .fg(Color::LightGreen)
                     .add_modifier(Modifier::BOLD),
                 Span::from("  "),
-                Span::from(text),
-                Span::from("  "),
-                Span::from(format!("(Start at {})", state.start_time.format("%H:%M"))),
+                Span::from(format!("Live Time Duration {}", text)),
             ]))
             .block(
                 Block::bordered()
                     .border_type(ratatui::widgets::BorderType::Rounded)
-                    .padding(Padding::horizontal(1)),
+                    .padding(Padding::horizontal(1))
+                    .title(Title::from(format!(
+                        " Start at {} ",
+                        state.start_time.format("%H:%M")
+                    )))
+                    .title_style(Style::default().fg(Color::LightGreen))
+                    .title_alignment(Alignment::Center),
             )
             .render(info_area, buf);
         } else {
@@ -264,4 +200,81 @@ fn small_num_text(num: u32) -> String {
     } else {
         format!("{}", num).to_string()
     }
+}
+
+fn render_enter_text(msg: UserActionMsg) -> Line<'static> {
+    Line::from(vec![
+        {
+            if let Some(ref badge) = msg.user.badge {
+                let color = {
+                    if let Some(ref anchor) = badge.anchor {
+                        if let Some(is_same_room) = anchor.is_same_room {
+                            if is_same_room {
+                                Color::from_str(&badge.color).unwrap_or_default()
+                            } else {
+                                Color::from_str("#666666").unwrap_or_default()
+                            }
+                        } else {
+                            Color::from_str("#666666").unwrap_or_default()
+                        }
+                    } else {
+                        Color::from_str("#666666").unwrap_or_default()
+                    }
+                };
+
+                Span::from(format!(" {} ", badge.name)).bg(color)
+            } else {
+                Span::raw("")
+            }
+        },
+        {
+            if let Some(ref badge) = msg.user.badge {
+                let color = {
+                    if let Some(ref anchor) = badge.anchor {
+                        if let Some(is_same_room) = anchor.is_same_room {
+                            if is_same_room {
+                                Color::from_str(&badge.color).unwrap_or_default()
+                            } else {
+                                Color::from_str("#666666").unwrap_or_default()
+                            }
+                        } else {
+                            Color::from_str("#666666").unwrap_or_default()
+                        }
+                    } else {
+                        Color::from_str("#666666").unwrap_or_default()
+                    }
+                };
+
+                Span::from(format!(" {} ", badge.level))
+                    .fg(color)
+                    .bg(Color::White)
+            } else {
+                Span::raw("")
+            }
+        },
+        Span::raw(" "),
+        {
+            let color = {
+                if let Some(identity) = msg.user.identity {
+                    let index = identity.guard_level as usize % USER_COLORS.len();
+                    Color::from_str(USER_COLORS[index]).unwrap_or_default()
+                } else {
+                    Color::from_str(USER_COLORS[0]).unwrap_or_default()
+                }
+            };
+
+            Span::from(msg.user.uname).bold().fg(color)
+        },
+        Span::raw(": "),
+        {
+            match msg.action.as_str() {
+                "enter" => Span::from("进入"),
+                "follow" => Span::from("关注"),
+                "share" => Span::from("分享"),
+                "like" => Span::from("点赞"),
+                _ => Span::raw(""),
+            }
+        },
+        Span::from("直播间"),
+    ])
 }
