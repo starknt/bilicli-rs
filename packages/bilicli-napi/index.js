@@ -310,8 +310,8 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { AppState, MsgType, Cli } = nativeBinding
+const { AppState, MsgType, Tui } = nativeBinding
 
 module.exports.AppState = AppState
 module.exports.MsgType = MsgType
-module.exports.Cli = Cli
+module.exports.Tui = Tui

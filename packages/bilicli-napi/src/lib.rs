@@ -45,24 +45,25 @@ pub mod ui;
 
 #[cfg(feature = "platform-napi")]
 #[napi]
-pub struct Cli {
+pub struct Tui {
     room_id: u32,
     app: Arc<Mutex<App>>,
-    state: Arc<Mutex<CliState>>,
+    state: Arc<Mutex<TuiState>>,
 }
 
 #[cfg(feature = "platform-napi")]
 #[napi]
-impl Cli {
+impl Tui {
     #[napi(constructor)]
-    pub fn new(room_id: u32) -> Result<Self> {
+    pub fn new(room_id: u32, cookie: Option<String>) -> Result<Self> {
         let app = App::default();
 
         Ok(Self {
             room_id,
             app: Arc::new(Mutex::new(app)),
-            state: Arc::new(Mutex::new(CliState {
+            state: Arc::new(Mutex::new(TuiState {
                 room_id,
+                cookie,
                 ..Default::default()
             })),
         })
@@ -172,7 +173,8 @@ pub fn init_panic_hook() {
 }
 
 #[derive(Clone, Default, Debug)]
-pub struct CliState {
+pub struct TuiState {
+    pub cookie: Option<String>,
     pub slider_bar_state: SliderBarState,
     pub state: AppState,
     pub room_id: u32,
@@ -186,7 +188,7 @@ pub struct CliState {
     pub messages: Vec<(MsgType, String)>,
 }
 
-impl CliState {
+impl TuiState {
     pub fn quit(&mut self) {
         if self.state == AppState::Quit {
             return;

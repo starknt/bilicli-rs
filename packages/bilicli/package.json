@@ -5,12 +5,12 @@
   "bin": {
     "bilicli": "./bin/cli.mjs"
   },
+  "type": "module",
   "license": "MIT",
-  "main": "dist/index.cjs",
+  "main": "dist/index.mjs",
   "module": "dist/index.mjs",
   "exports": {
     ".": {
-      "require": "./dist/index.cjs",
       "import": "./dist/index.mjs"
     }
   },
@@ -28,7 +28,8 @@
   "dependencies": {
     "@natmri/bilicli-napi": "workspace:*",
     "cac": "^6.7.14",
-    "blive-message-listener": "^0.4.8"
+    "blive-message-listener": "^0.4.8",
+    "open": "^10.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.4.0"

@@ -6,7 +6,7 @@ use ratatui::{
 
 use unicode_width::UnicodeWidthStr;
 
-use crate::CliState;
+use crate::TuiState;
 
 use super::{helper::render_basic_info, MsgType, UserActionMsg};
 
@@ -14,7 +14,7 @@ use super::{helper::render_basic_info, MsgType, UserActionMsg};
 pub struct Footer;
 
 impl StatefulWidget for &mut Footer {
-    type State = CliState;
+    type State = TuiState;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         let enter = state
@@ -35,11 +35,13 @@ impl StatefulWidget for &mut Footer {
                 let (_, msg) = enter;
                 if let Ok(msg) = serde_json::from_str::<UserActionMsg>(msg) {
                     render_enter_text(msg)
-                } else {
+                } else if state.cookie.is_some() {
                     Line::from(" 按 Enter 输入弹幕信息, Esc 取消输入 ")
+                } else {
+                    Line::from(" 登录后(Cookie)按 Enter 输入弹幕信息, Esc 取消输入 ")
                 }
             } else {
-                Line::from(" 按 Enter 输入弹幕信息, Esc 取消输入 ")
+                Line::from(" 登录后(Cookie)按 Enter 输入弹幕信息, Esc 取消输入 ")
             }
         };
 
@@ -77,7 +79,7 @@ impl StatefulWidget for &mut Footer {
                 Block::bordered()
                     .border_type(ratatui::widgets::BorderType::Rounded)
                     .padding(Padding::horizontal(1))
-                    .title(if enter.is_some() {
+                    .title(if enter.is_some() && state.cookie.is_some() {
                         Title::from("按 Enter 输入弹幕信息, Esc 取消输入")
                     } else {
                         Title::from("提示")

@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{block::Title, Block, ListState, Padding, Paragraph, Scrollbar, ScrollbarState},
 };
 
-use crate::CliState;
+use crate::TuiState;
 
 use super::{
     helper::{
@@ -116,7 +116,7 @@ impl Tab {
 }
 
 impl StatefulWidget for &mut Tab {
-    type State = CliState;
+    type State = TuiState;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         match self {
@@ -139,7 +139,7 @@ impl Tab {
         self.scroll() > 0 && area.height > content_length as u16
     }
 
-    fn block(&self, state: &CliState) -> Block {
+    fn block(&self, state: &TuiState) -> Block {
         Block::bordered()
             .title({
                 if state.slider_bar_state == SliderBarState::Hiding {
@@ -152,7 +152,7 @@ impl Tab {
             .padding(Padding::horizontal(1))
     }
 
-    fn render_all_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut CliState) {
+    fn render_all_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut TuiState) {
         let text: Vec<Line<'static>> = state
             .messages
             .iter()
@@ -188,7 +188,7 @@ impl Tab {
         StatefulWidget::render(scrollbar, area, buf, self.state());
     }
 
-    fn render_danmu_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut CliState) {
+    fn render_danmu_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut TuiState) {
         let text: Vec<Line<'static>> = state
             .messages
             .iter()
@@ -224,7 +224,7 @@ impl Tab {
         StatefulWidget::render(scrollbar, area, buf, self.state());
     }
 
-    fn render_sc_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut CliState) {
+    fn render_sc_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut TuiState) {
         let text: Vec<Line<'static>> = state
             .messages
             .iter()
@@ -260,7 +260,7 @@ impl Tab {
         StatefulWidget::render(scrollbar, area, buf, self.state());
     }
 
-    fn render_gift_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut CliState) {
+    fn render_gift_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut TuiState) {
         let text: Vec<Line<'static>> = state
             .messages
             .iter()
@@ -296,7 +296,7 @@ impl Tab {
         StatefulWidget::render(scrollbar, area, buf, self.state());
     }
 
-    fn render_captain_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut CliState) {
+    fn render_captain_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut TuiState) {
         let text: Vec<Line<'static>> = state
             .messages
             .iter()
@@ -332,7 +332,7 @@ impl Tab {
         StatefulWidget::render(scrollbar, area, buf, self.state());
     }
 
-    fn render_enter_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut CliState) {
+    fn render_enter_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut TuiState) {
         let text: Vec<Line<'static>> = state
             .messages
             .iter()

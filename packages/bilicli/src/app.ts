@@ -1,5 +1,10 @@
-import { Cli, MsgType } from '@natmri/bilicli-napi'
+import { Tui, MsgType } from '@natmri/bilicli-napi'
 import { Message, MsgHandler, startListen } from 'blive-message-listener'
+import open from 'open'
+import { isAbsolute, join } from 'node:path'
+import { homedir, userInfo } from 'node:os'
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 
 export interface AppOptions {
   cookie?: string
@@ -13,27 +18,65 @@ export interface EditOptions {
 
 export class App {
   private readonly roomId: number
-  private readonly cli: Cli
+  private readonly tui: Tui
 
-  constructor(roomId: string, private options: AppOptions) {
+  constructor(roomId: string | undefined, private options: AppOptions) {
+    if (!roomId) {
+      const config = getConfigPath(this.options.config)
+
+      if (!existsSync(config)) {
+        throw new Error('房间号或配置文件路径不能为空')
+      }
+
+      try {
+        const require = createRequire(join(config, '..'))
+        const c = require(config.endsWith('.js') ? config : `${config}.js`)
+        
+        roomId = c.roomId
+        this.options.cookie = c?.cookie || ''
+        this.options.uid = c?.uid
+      } catch (error) {
+        console.error(error)
+        throw new Error('配置文件格式不正确')
+      }
+    } else if(!this.options?.cookie || !this.options?.uid) {
+      const config = getConfigPath(this.options.config)
+      if (existsSync(config)) {
+        try {
+          const require = createRequire(join(config, '..'))
+          const c = require(config.endsWith('.js') ? config : `${config}.js`)
+          if(!roomId && c.roomId) {
+            roomId = c.roomId
+          }
+          if(!this.options.cookie && c.cookie) {
+            this.options.cookie = c.cookie
+          }
+          if(!this.options.uid && c.uid) {
+            this.options.uid = c.uid
+          }
+        } catch {
+        }
+      }
+    }
+
     this.roomId = parseInt(roomId)
 
     if (isNaN(this.roomId)) {
       throw new Error('房间号格式不正确')
     }
 
-    this.cli = new Cli(this.roomId)
+    this.tui = new Tui(this.roomId, this.options?.cookie)
 
     const handler: MsgHandler = {
-      onAttentionChange: ({ body }) => this.cli.sendAttentionChange(body.attention),
-      onWatchedChange: ({ body }) => this.cli.sendWatcherChange(body.num),
-      onLiveStart: () => this.cli.sendLiveChange(true),
-      onLiveEnd: () => this.cli.sendLiveChange(false),
-      onIncomeDanmu: (msg) => this.cli.sendMsg(MsgType.Danmu, JSON.stringify(this.mixTimestamp2Body(msg))),
-      onIncomeSuperChat: (msg) =>  this.cli.sendMsg(MsgType.SuperChat, JSON.stringify(this.mixTimestamp2Body(msg))),
-      onGift: (msg) => this.cli.sendMsg(MsgType.Gift, JSON.stringify(this.mixTimestamp2Body(msg))),
-      onGuardBuy: (msg) => this.cli.sendMsg(MsgType.GuardBuy, JSON.stringify(this.mixTimestamp2Body(msg))),
-      onUserAction: (msg) => this.cli.sendMsg(MsgType.UserAction, JSON.stringify(this.mixTimestamp2Body(msg))),
+      onAttentionChange: ({ body }) => this.tui.sendAttentionChange(body.attention),
+      onWatchedChange: ({ body }) => this.tui.sendWatcherChange(body.num),
+      onLiveStart: () => this.tui.sendLiveChange(true),
+      onLiveEnd: () => this.tui.sendLiveChange(false),
+      onIncomeDanmu: (msg) => this.tui.sendMsg(MsgType.Danmu, JSON.stringify(this.mixTimestamp2Body(msg))),
+      onIncomeSuperChat: (msg) =>  this.tui.sendMsg(MsgType.SuperChat, JSON.stringify(this.mixTimestamp2Body(msg))),
+      onGift: (msg) => this.tui.sendMsg(MsgType.Gift, JSON.stringify(this.mixTimestamp2Body(msg))),
+      onGuardBuy: (msg) => this.tui.sendMsg(MsgType.GuardBuy, JSON.stringify(this.mixTimestamp2Body(msg))),
+      onUserAction: (msg) => this.tui.sendMsg(MsgType.UserAction, JSON.stringify(this.mixTimestamp2Body(msg))),
     }
 
     let uid: number | undefined
@@ -55,7 +98,7 @@ export class App {
   }
 
   async run() {
-    await this.cli.run()
+    await this.tui.run()
   }
 
   private mixTimestamp2Body(msg: Message<any>) {
@@ -64,4 +107,56 @@ export class App {
       timestamp: msg?.timestamp || Date.now(),
     }
   }
+}
+
+function getConfigPath(config: string) {
+  let target = config
+  let userinfo = userInfo()
+  
+  switch (process.platform) {
+    case 'darwin':
+      if(!isAbsolute(config)) {
+        target = join(homedir(), userinfo.username, '.config', 'bilicli')
+        if(!existsSync(target)) {
+          mkdirSync(target, { recursive: true })
+        }
+        target = join(target, config)
+      }
+      break
+    case 'win32':
+      if(!isAbsolute(config)) {
+        target = join(homedir(), userinfo.username, 'AppData', 'Roaming', 'bilicli')
+        if(!existsSync(target)) {
+          mkdirSync(target, { recursive: true })
+        }
+        target = join(target, config)
+      }
+      break
+    default:
+      if(!isAbsolute(config)) {
+        target = join(homedir(), userinfo.username, '.config', 'bilicli')
+        if(!existsSync(target)) {
+          mkdirSync(target, { recursive: true })
+        }
+        target = join(target, config)
+      }
+  }
+
+  return target
+}
+
+export async function openEditor(config: string) {
+  let target = getConfigPath(config)
+
+  if(!existsSync(target)) {
+    writeFileSync(target, `
+module.exports = {
+  cookie: '',
+  uid: undefined,
+  roomId: 1,
+}
+    `)
+  }
+
+  await open(target)
 }

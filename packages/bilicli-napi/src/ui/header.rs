@@ -3,13 +3,13 @@ use ratatui::{
     widgets::{Block, Padding, Paragraph},
 };
 
-use crate::CliState;
+use crate::TuiState;
 
 #[derive(Default, Debug)]
 pub struct Header;
 
 impl StatefulWidget for &Header {
-    type State = CliState;
+    type State = TuiState;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         let block = Block::bordered()

@@ -3,18 +3,19 @@
 use std::time::Duration;
 
 use crate::{
+    api::send_danmu,
     ui::{
         footer::Footer, header::Header, helper::centered_rect, tabs::Tabs, AppState, InputMode,
         SliderBarState,
     },
-    CliState,
+    TuiState,
 };
 use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind};
 use futures::StreamExt;
 use ratatui::{
     prelude::*,
     style::palette::tailwind,
-    widgets::{Block, Borders, List, ListItem, Padding, Paragraph, Wrap},
+    widgets::{block::Title, Block, Borders, List, ListItem, Padding, Paragraph, Wrap},
 };
 use tui_textarea::TextArea;
 
@@ -30,6 +31,7 @@ pub struct App {
     tabs: Tabs,
     pub textarea: TextArea<'static>,
     pub will_send_message: Vec<String>,
+    err_text: Option<String>,
 }
 
 unsafe impl Send for App {}
@@ -40,31 +42,55 @@ impl App {
     pub async fn run(
         &mut self,
         terminal: &mut Terminal<impl Backend>,
-        state: &mut CliState,
+        state: &mut TuiState,
     ) -> Result<()> {
         let mut interval =
             tokio::time::interval(Duration::from_secs_f32(1.0 / Self::FRAMES_PER_SECOND));
+        let mut send_danmu_interval = tokio::time::interval(Duration::from_secs(10));
         let mut events = EventStream::new();
 
         tokio::select! {
             _ = interval.tick() => self.draw(terminal, state)?,
+            _ = send_danmu_interval.tick() => {
+                if !self.will_send_message.is_empty() {
+                    self.send_danmu(state).await?;
+                }
+            },
             Some(Ok(event)) = events.next() =>  self.handle_events(&event, state)?,
         }
 
         Ok(())
     }
 
-    fn draw(
-        &mut self,
-        terminal: &mut Terminal<impl Backend>,
-        state: &mut CliState,
-    ) -> crate::app::Result<()> {
+    fn draw(&mut self, terminal: &mut Terminal<impl Backend>, state: &mut TuiState) -> Result<()> {
         terminal.draw(|f| f.render_stateful_widget(self, f.area(), state))?;
 
         Ok(())
     }
 
-    pub fn handle_events(&mut self, event: &Event, state: &mut CliState) -> crate::app::Result<()> {
+    pub async fn send_danmu(&mut self, state: &mut TuiState) -> Result<()> {
+        self.err_text = None;
+        let content = self.will_send_message.remove(0);
+        let room_id = state.room_id;
+        let cookie = state.cookie.clone();
+        let result = tokio::spawn(async move {
+            if let Some(cookie) = cookie {
+                send_danmu(room_id, &content, cookie).await
+            } else {
+                Ok(())
+            }
+        })
+        .await
+        .unwrap();
+
+        if result.is_err() {
+            self.err_text = Some(result.err().unwrap());
+        }
+
+        Ok(())
+    }
+
+    pub fn handle_events(&mut self, event: &Event, state: &mut TuiState) -> crate::app::Result<()> {
         if let Event::Key(key) = event {
             match self.input_mode {
                 InputMode::Normal => {
@@ -88,7 +114,9 @@ impl App {
                             KeyCode::Char('t') if state.state == AppState::Running => {
                                 self.toggle_slider_bar(state)
                             }
-                            KeyCode::Enter if state.state == AppState::Running => {
+                            KeyCode::Enter
+                                if state.state == AppState::Running && state.cookie.is_some() =>
+                            {
                                 self.input_mode = InputMode::Editing;
                                 self.textarea
                                     .set_style(Style::default().fg(Color::LightGreen));
@@ -108,8 +136,9 @@ impl App {
                             }
                             KeyCode::Enter => {
                                 if !self.textarea.lines()[0].is_empty() {
-                                    self.will_send_message.push(self.textarea.yank_text());
-                                    self.textarea.delete_str(self.textarea.lines()[0].len());
+                                    self.will_send_message
+                                        .push(self.textarea.lines()[0].to_string());
+                                    self.input_mode = InputMode::Normal;
                                 }
                             }
                             KeyCode::Esc => {
@@ -130,7 +159,7 @@ impl App {
         Ok(())
     }
 
-    pub fn toggle_slider_bar(&mut self, state: &mut CliState) {
+    pub fn toggle_slider_bar(&mut self, state: &mut TuiState) {
         state.slider_bar_state = match state.slider_bar_state {
             SliderBarState::Normal => SliderBarState::Hiding,
             SliderBarState::Hiding => SliderBarState::Normal,
@@ -161,7 +190,7 @@ impl App {
 }
 
 impl StatefulWidget for &mut App {
-    type State = CliState;
+    type State = TuiState;
 
     fn render(self, root: Rect, buf: &mut Buffer, state: &mut Self::State) {
         if state.state == AppState::Quitting {
@@ -253,7 +282,7 @@ impl App {
         StatefulWidget::render(list, area, buf, &mut self.tabs.state);
     }
 
-    fn render_selected_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut CliState) {
+    fn render_selected_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut TuiState) {
         let tab = if let Some(index) = self.tabs.state.selected() {
             &mut self.tabs.tabs[index]
         } else {
@@ -287,11 +316,17 @@ impl App {
                 .border_style(Color::LightGreen)
                 .borders(Borders::ALL)
                 .padding(Padding::left(1))
-                .title(format!(
-                    " {} / {} ",
-                    self.textarea.lines()[0].len(),
-                    MAX_INPUT_LENGTH
-                ))
+                .title({
+                    if let Some(err_text) = &self.err_text {
+                        Title::from(format!("错误: {} ", err_text).red())
+                    } else {
+                        Title::from(format!(
+                            " {} / {} ",
+                            self.textarea.lines()[0].len(),
+                            MAX_INPUT_LENGTH
+                        ))
+                    }
+                })
                 .title_alignment(Alignment::Center),
         );
 

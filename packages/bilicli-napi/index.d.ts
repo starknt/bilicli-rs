@@ -15,8 +15,8 @@ export const enum MsgType {
   GuardBuy = 3,
   UserAction = 4
 }
-export declare class Cli {
-  constructor(roomId: number)
+export declare class Tui {
+  constructor(roomId: number, cookie?: string | undefined | null)
   get state(): Promise<AppState>
   /**
    * # Safety
