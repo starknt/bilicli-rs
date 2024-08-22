@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use chrono::prelude::*;
 use ratatui::{
     prelude::*,
@@ -10,7 +8,7 @@ use unicode_width::UnicodeWidthStr;
 
 use crate::CliState;
 
-use super::{colors::USER_COLORS, MsgType, UserActionMsg};
+use super::{helper::render_basic_info, MsgType, UserActionMsg};
 
 #[derive(Debug, Default)]
 pub struct Footer;
@@ -203,78 +201,8 @@ fn small_num_text(num: u32) -> String {
 }
 
 fn render_enter_text(msg: UserActionMsg) -> Line<'static> {
-    Line::from(vec![
-        {
-            if let Some(ref badge) = msg.user.badge {
-                let color = {
-                    if let Some(ref anchor) = badge.anchor {
-                        if let Some(is_same_room) = anchor.is_same_room {
-                            if is_same_room {
-                                Color::from_str(&badge.color).unwrap_or_default()
-                            } else {
-                                Color::from_str("#666666").unwrap_or_default()
-                            }
-                        } else {
-                            Color::from_str("#666666").unwrap_or_default()
-                        }
-                    } else {
-                        Color::from_str("#666666").unwrap_or_default()
-                    }
-                };
+    let mut spans = render_basic_info(None, msg.user, None);
+    spans.push(Span::from("进入你的直播间"));
 
-                Span::from(format!(" {} ", badge.name)).bg(color)
-            } else {
-                Span::raw("")
-            }
-        },
-        {
-            if let Some(ref badge) = msg.user.badge {
-                let color = {
-                    if let Some(ref anchor) = badge.anchor {
-                        if let Some(is_same_room) = anchor.is_same_room {
-                            if is_same_room {
-                                Color::from_str(&badge.color).unwrap_or_default()
-                            } else {
-                                Color::from_str("#666666").unwrap_or_default()
-                            }
-                        } else {
-                            Color::from_str("#666666").unwrap_or_default()
-                        }
-                    } else {
-                        Color::from_str("#666666").unwrap_or_default()
-                    }
-                };
-
-                Span::from(format!(" {} ", badge.level))
-                    .fg(color)
-                    .bg(Color::White)
-            } else {
-                Span::raw("")
-            }
-        },
-        Span::raw(" "),
-        {
-            let color = {
-                if let Some(identity) = msg.user.identity {
-                    let index = identity.guard_level as usize % USER_COLORS.len();
-                    Color::from_str(USER_COLORS[index]).unwrap_or_default()
-                } else {
-                    Color::from_str(USER_COLORS[0]).unwrap_or_default()
-                }
-            };
-
-            Span::from(msg.user.uname).bold().fg(color)
-        },
-        Span::raw(": "),
-        {
-            match msg.action.as_str() {
-                "enter" => Span::from("进入"),
-                "follow" => Span::from("关注"),
-                "share" => Span::from("分享"),
-                "like" => Span::from("点赞"),
-                _ => Span::raw(""),
-            }
-        },
-        Span::from("直播间"),
-    ])
+    Line::from(spans)
 }

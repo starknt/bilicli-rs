@@ -35,20 +35,20 @@ pub fn replace_emoji_to_unicode(emoji_str: &str) -> String {
         .replace("[比心]", "❤️")
 }
 
-fn render_basic_info(
-    t: MsgType,
+pub fn render_basic_info(
+    t: Option<MsgType>,
     user: User,
-    time: DateTime<Local>,
-    render_type: bool,
+    time: Option<DateTime<Local>>,
 ) -> Vec<Span<'static>> {
     let mut spans = vec![];
 
-    spans.push(
-        Span::from(format!("{}", time.format("%H:%M:%S")))
-            .fg(*GRAY_COLOR.get_or_init(|| Color::from_hsl(0.0, 0.0, 40.0))),
-    );
+    let color = *GRAY_COLOR.get_or_init(|| Color::from_hsl(0.0, 0.0, 40.0));
 
-    if render_type {
+    if let Some(time) = time {
+        spans.push(Span::from(format!("{}", time.format("%H:%M:%S"))).fg(color));
+    }
+
+    if let Some(t) = t {
         spans.push(Span::from(format!(" [{}] ", t)).fg(Color::LightYellow));
     } else {
         spans.push(Span::raw(" "));
@@ -59,7 +59,7 @@ fn render_basic_info(
         if let Some(ref anchor) = badge.anchor {
             if let Some(is_same_room) = anchor.is_same_room {
                 if is_same_room {
-                    color = Color::from_str(&badge.color).unwrap_or(*GRAY_COLOR.get().unwrap())
+                    color = Color::from_str(&badge.color).unwrap_or(color)
                 }
             }
         }
@@ -93,7 +93,11 @@ pub fn render_danmu_message(
     time: DateTime<Local>,
     render_type: bool,
 ) -> Line<'static> {
-    let mut spans = render_basic_info(MsgType::Danmu, msg.user, time, render_type);
+    let mut spans = render_basic_info(
+        get_msg_type(render_type, MsgType::Danmu),
+        msg.user,
+        Some(time),
+    );
     spans.push(Span::from(replace_emoji_to_unicode(&msg.content)));
 
     Line::from(spans)
@@ -105,7 +109,11 @@ pub fn render_super_chat_message(
     time: DateTime<Local>,
     render_type: bool,
 ) -> Line<'static> {
-    let mut spans = render_basic_info(MsgType::SuperChat, msg.user, time, render_type);
+    let mut spans = render_basic_info(
+        get_msg_type(render_type, MsgType::SuperChat),
+        msg.user,
+        Some(time),
+    );
     spans.push(Span::from(format!("({} 元)", msg.price)));
     spans.push(Span::raw(" "));
     spans.push(Span::from(msg.content));
@@ -119,7 +127,11 @@ pub fn render_gift_message(
     time: DateTime<Local>,
     render_type: bool,
 ) -> Line<'static> {
-    let mut spans = render_basic_info(MsgType::Gift, msg.user, time, render_type);
+    let mut spans = render_basic_info(
+        get_msg_type(render_type, MsgType::Gift),
+        msg.user,
+        Some(time),
+    );
     spans.push(Span::from(format!(
         "赠送了{} * {} ",
         msg.gift_name, msg.amount
@@ -147,7 +159,11 @@ pub fn render_guard_buy_message(
     time: DateTime<Local>,
     render_type: bool,
 ) -> Line<'static> {
-    let mut spans = render_basic_info(MsgType::GuardBuy, msg.user, time, render_type);
+    let mut spans = render_basic_info(
+        get_msg_type(render_type, MsgType::GuardBuy),
+        msg.user,
+        Some(time),
+    );
     spans.push(Span::raw("在你的直播间购买了"));
     spans.push(Span::from(msg.gift_name).fg(tailwind::GREEN.c400).bold());
     spans.push(Span::raw(" "));
@@ -162,7 +178,11 @@ pub fn render_user_action_message(
     time: DateTime<Local>,
     render_type: bool,
 ) -> Line<'static> {
-    let mut spans = render_basic_info(MsgType::UserAction, msg.user, time, render_type);
+    let mut spans = render_basic_info(
+        get_msg_type(render_type, MsgType::UserAction),
+        msg.user,
+        Some(time),
+    );
     spans.push({
         match msg.action.as_str() {
             "enter" => Span::from("进入你的直播间"),
@@ -174,4 +194,13 @@ pub fn render_user_action_message(
     });
 
     Line::from(spans)
+}
+
+#[inline]
+fn get_msg_type(render_type: bool, msg_type: MsgType) -> Option<MsgType> {
+    if render_type {
+        Some(msg_type)
+    } else {
+        None
+    }
 }
