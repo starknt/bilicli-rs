@@ -448,7 +448,7 @@ impl Tab {
                         Span::from(msg.user.uname).bold().fg(color)
                     },
                     Span::raw(": "),
-                    Span::from(msg.content),
+                    Span::from(replace_emoji_to_unicode(&msg.content)),
                 ])
             }
             MsgType::SuperChat => {
@@ -863,4 +863,13 @@ fn get_local_time_from_timestamp(timestamp: i64) -> DateTime<Local> {
     let time = DateTime::from_timestamp_millis(timestamp).unwrap();
     let time = time.naive_local();
     Local.from_utc_datetime(&time)
+}
+
+fn replace_emoji_to_unicode(emoji_str: &str) -> String {
+    emoji_str
+        .replace("[dog]", "🐶")
+        .replace("[手机]", "📱")
+        .replace("[花]", "🌹")
+        .replace("[吃瓜]", "")
+        .replace("[比心]", "❤️")
 }
