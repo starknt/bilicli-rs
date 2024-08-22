@@ -143,7 +143,7 @@ impl Tab {
         Block::bordered()
             .title({
                 if state.slider_bar_state == SliderBarState::Hiding {
-                    Title::from(self.title()).alignment(Alignment::Center)
+                    Title::from(format!(" {} ", self.title())).alignment(Alignment::Center)
                 } else {
                     Title::from("")
                 }

@@ -36,10 +36,10 @@ impl StatefulWidget for &mut Footer {
                 if let Ok(msg) = serde_json::from_str::<UserActionMsg>(msg) {
                     render_enter_text(msg)
                 } else {
-                    Line::from("按 Enter 输入弹幕信息, Esc 取消输入")
+                    Line::from(" 按 Enter 输入弹幕信息, Esc 取消输入 ")
                 }
             } else {
-                Line::from("按 Enter 输入弹幕信息, Esc 取消输入")
+                Line::from(" 按 Enter 输入弹幕信息, Esc 取消输入 ")
             }
         };
 
