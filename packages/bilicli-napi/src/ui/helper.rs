@@ -80,6 +80,12 @@ pub fn render_basic_info(
             Color::from_str(USER_COLORS[index]).unwrap_or(Color::from_str(USER_COLORS[0]).unwrap());
 
         spans.push(Span::from(user.uname).bold().fg(color));
+    } else {
+        spans.push(
+            Span::from(user.uname)
+                .bold()
+                .fg(Color::from_str(USER_COLORS[0]).unwrap()),
+        );
     }
 
     spans.push(Span::raw(": "));
