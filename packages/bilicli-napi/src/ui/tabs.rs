@@ -29,7 +29,7 @@ impl Tab {
         match self {
             Tab::AllTab(_, _) => "全部".to_string(),
             Tab::DanMuTab(_, _) => "弹幕".to_string(),
-            Tab::SCTab(_, _) => "SC  ".to_string(),
+            Tab::SCTab(_, _) => " SC ".to_string(),
             Tab::GiftTab(_, _) => "礼物".to_string(),
             Tab::CaptainTab(_, _) => "上舰".to_string(),
             Tab::EnterTab(_, _) => "入场".to_string(),

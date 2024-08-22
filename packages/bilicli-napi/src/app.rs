@@ -35,7 +35,7 @@ pub struct App {
 unsafe impl Send for App {}
 
 impl App {
-    const FRAMES_PER_SECOND: f32 = 120.0;
+    const FRAMES_PER_SECOND: f32 = 60.0;
 
     pub async fn run(
         &mut self,
@@ -200,7 +200,7 @@ impl StatefulWidget for &mut App {
 
 impl App {
     fn render_quit_question(&self, area: Rect, buf: &mut Buffer) {
-        let area = centered_rect(80, 15, area);
+        let area = centered_rect(60, 40, area);
         let block = Block::bordered()
             .title(" 提示 ")
             .title_alignment(Alignment::Center)
