@@ -31,12 +31,20 @@ impl StatefulWidget for &mut Footer {
             .last();
 
         let enter_text = {
-            let msg_text = if state.cookie.is_some() {
-                " 按 Enter 输入弹幕信息, Esc 取消输入 "
+            if let Some(enter) = enter {
+                let (_, msg) = enter;
+                if let Ok(msg) = serde_json::from_str::<UserActionMsg>(msg) {
+                    render_enter_text(msg)
+                } else if state.cookie.is_some() {
+                    Line::from(" 按 Enter 输入弹幕信息, Esc 取消输入 ")
+                } else {
+                    Line::from(" 登录后(Cookie)按 Enter 输入弹幕信息, Esc 取消输入 ")
+                }
+            } else if state.cookie.is_some() {
+                Line::from(" 按 Enter 输入弹幕信息, Esc 取消输入 ")
             } else {
-                " 登录后(Cookie)按 Enter 输入弹幕信息, Esc 取消输入 "
-            };
-            Line::from(msg_text)
+                Line::from(" 登录后(Cookie)按 Enter 输入弹幕信息, Esc 取消输入 ")
+            }
         };
 
         let enter_text_width = enter_text.width() + 4;
