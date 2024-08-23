@@ -56,16 +56,10 @@ pub struct Tui {
 impl Tui {
     #[napi(constructor)]
     pub fn new(room_id: u32, cookie: Option<String>) -> Result<Self> {
-        let app = App::default();
-
         Ok(Self {
             room_id,
-            app: Arc::new(Mutex::new(app)),
-            state: Arc::new(Mutex::new(TuiState {
-                room_id,
-                cookie,
-                ..Default::default()
-            })),
+            app: Arc::new(Mutex::new(App::default())),
+            state: Arc::new(Mutex::new(TuiState::new(room_id, cookie))),
         })
     }
 
@@ -186,6 +180,16 @@ pub struct TuiState {
     pub parent_area_name: String,
     pub title: String,
     pub messages: Vec<(MsgType, String)>,
+}
+
+impl TuiState {
+    pub fn new(room_id: u32, cookie: Option<String>) -> Self {
+        Self {
+            room_id,
+            cookie,
+            ..Default::default()
+        }
+    }
 }
 
 impl TuiState {

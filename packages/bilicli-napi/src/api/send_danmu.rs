@@ -7,36 +7,40 @@ use reqwest::header::{HeaderMap, HeaderValue, COOKIE};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-struct BaseUserInfo {
-    name: String,
-    face: String,
+pub struct BaseUserInfo {
+    pub(crate) name: String,
+    pub(crate) face: String,
 }
 
 #[derive(Deserialize)]
-struct User {
-    uid: u64,
-    base: BaseUserInfo,
+pub struct User {
+    pub(crate) uid: u64,
+    pub(crate) base: BaseUserInfo,
 }
 
 #[derive(Deserialize)]
-struct ModeInfo {
+pub struct ModeInfo {
     mode: i32,
-    user: User,
+    pub(crate) user: User,
 }
 
 #[derive(Deserialize)]
-struct SendDanmuData {
-    mode_info: ModeInfo,
+pub struct SendDanmuData {
+    pub(crate) mode_info: ModeInfo,
 }
 
 #[derive(Deserialize)]
-struct SendDanmuResponse {
+pub struct SendDanmuResponse {
     code: i32,
     message: String,
     data: Option<SendDanmuData>,
 }
 
-pub async fn send_danmu(room_id: u32, content: &str, cookie: String) -> Result<(), String> {
+pub async fn send_danmu(
+    room_id: u32,
+    content: &str,
+    cookie: String,
+) -> Result<SendDanmuData, String> {
     let mut headers = HeaderMap::new();
     headers.insert(COOKIE, HeaderValue::from_str(&cookie).unwrap());
 
@@ -76,7 +80,7 @@ pub async fn send_danmu(room_id: u32, content: &str, cookie: String) -> Result<(
         if body.code != 0 {
             return Err(body.message);
         }
-        Ok(())
+        Ok(body.data.unwrap())
     } else {
         Err(response.text().await.unwrap())
     }

@@ -2,7 +2,7 @@
 
 #[cfg(feature = "platform-napi")]
 use napi_derive::napi;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter, FromRepr};
 
 pub mod colors;
@@ -75,7 +75,7 @@ pub enum MsgType {
     UserAction,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Anchor {
     uid: u64,
     uname: String,
@@ -83,34 +83,54 @@ pub struct Anchor {
     is_same_room: Option<bool>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Identity {
     rank: u8,
     guard_level: u8,
     room_admin: bool,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Badge {
     // active: bool,
-    name: String,
-    level: u8,
-    color: String,
+    pub(crate) name: String,
+    pub(crate) level: u8,
+    pub(crate) color: String,
     gradient: Option<Vec<String>>,
     anchor: Option<Anchor>,
     identity: Option<Identity>,
 }
 
-#[derive(Deserialize)]
-pub struct User {
-    uid: u64,
-    uname: String,
-    face: Option<String>,
-    badge: Option<Badge>,
-    identity: Option<Identity>,
+impl Badge {
+    pub fn new(
+        name: String,
+        level: u8,
+        color: String,
+        gradient: Option<Vec<String>>,
+        anchor: Option<Anchor>,
+        identity: Option<Identity>,
+    ) -> Self {
+        Self {
+            name,
+            level,
+            color,
+            gradient,
+            anchor,
+            identity,
+        }
+    }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
+pub struct User {
+    pub uid: u64,
+    pub uname: String,
+    pub face: Option<String>,
+    pub badge: Option<Badge>,
+    pub identity: Option<Identity>,
+}
+
+#[derive(Deserialize, Serialize)]
 pub struct Emoticon {
     id: String,
     height: i32,
@@ -118,13 +138,31 @@ pub struct Emoticon {
     url: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct DanmuMsg {
     user: User,
     content: String,
     timestamp: i64,
     lottery: bool,
     emoticon: Option<Emoticon>,
+}
+
+impl DanmuMsg {
+    pub fn new(
+        user: User,
+        content: String,
+        timestamp: i64,
+        lottery: bool,
+        emoticon: Option<Emoticon>,
+    ) -> Self {
+        Self {
+            user,
+            content,
+            timestamp,
+            lottery,
+            emoticon,
+        }
+    }
 }
 
 #[derive(Deserialize)]

@@ -3,13 +3,14 @@
 use std::time::Duration;
 
 use crate::{
-    api::send_danmu,
+    api::{get_room_by_user, send_danmu, WearedV2},
     ui::{
-        footer::Footer, header::Header, helper::centered_rect, tabs::Tabs, AppState, InputMode,
-        SliderBarState,
+        footer::Footer, header::Header, helper::centered_rect, tabs::Tabs, AppState, Badge,
+        DanmuMsg, InputMode, MsgType, SliderBarState, User,
     },
     TuiState,
 };
+use chrono::Local;
 use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind};
 use futures::StreamExt;
 use ratatui::{
@@ -32,6 +33,7 @@ pub struct App {
     pub textarea: TextArea<'static>,
     pub will_send_message: Vec<String>,
     err_text: Option<String>,
+    weared_v2: Option<WearedV2>,
 }
 
 unsafe impl Send for App {}
@@ -73,18 +75,50 @@ impl App {
         let content = self.will_send_message.remove(0);
         let room_id = state.room_id;
         let cookie = state.cookie.clone();
+        let will_send_message = content.clone();
         let result = tokio::spawn(async move {
             if let Some(cookie) = cookie {
-                send_danmu(room_id, &content, cookie).await
+                send_danmu(room_id, will_send_message.as_str(), cookie).await
             } else {
-                Ok(())
+                Err("未登录".to_string())
             }
         })
         .await
         .unwrap();
 
+        if self.weared_v2.is_none() {
+            let result = get_room_by_user(room_id).await;
+            if result.is_ok() {
+                self.weared_v2 = Some(result.unwrap().medal.curr_weared_v2);
+            }
+        }
+
         if result.is_err() {
             self.err_text = Some(result.err().unwrap());
+        } else {
+            let timestamp = Local::now().timestamp_millis();
+            let data = result.unwrap();
+            let mut user: User = User {
+                uid: data.mode_info.user.uid,
+                uname: data.mode_info.user.base.name,
+                face: None,
+                badge: None,
+                identity: None,
+            };
+            if let Some(weared_v2) = &self.weared_v2 {
+                user.badge = Some(Badge::new(
+                    weared_v2.name.clone(),
+                    weared_v2.level as u8,
+                    weared_v2.v2_medal_color_text.clone(),
+                    None,
+                    None,
+                    None,
+                ));
+            }
+            let msg = DanmuMsg::new(user, content, timestamp, false, None);
+            state
+                .messages
+                .push((MsgType::Danmu, serde_json::to_string(&msg).unwrap()));
         }
 
         Ok(())
