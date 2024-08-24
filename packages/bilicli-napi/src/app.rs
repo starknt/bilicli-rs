@@ -48,16 +48,14 @@ impl App {
     ) -> Result<()> {
         let mut interval =
             tokio::time::interval(Duration::from_secs_f32(1.0 / Self::FRAMES_PER_SECOND));
-        let mut send_danmu_interval = tokio::time::interval(Duration::from_secs(10));
         let mut events = EventStream::new();
+
+        if !self.will_send_message.is_empty() {
+            self.send_danmu(state).await.unwrap_or_default();
+        }
 
         tokio::select! {
             _ = interval.tick() => self.draw(terminal, state)?,
-            _ = send_danmu_interval.tick() => {
-                if !self.will_send_message.is_empty() {
-                    self.send_danmu(state).await?;
-                }
-            },
             Some(Ok(event)) = events.next() =>  self.handle_events(&event, state)?,
         }
 
