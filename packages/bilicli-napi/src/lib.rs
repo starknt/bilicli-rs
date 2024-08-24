@@ -1,8 +1,5 @@
-use std::{
-    io::stdout,
-    panic::{set_hook, take_hook},
-    sync::Arc,
-};
+#[cfg(feature = "platform-napi")]
+use std::{io::stdout, sync::Arc};
 
 #[cfg(feature = "platform-napi")]
 use crate::{
@@ -72,8 +69,6 @@ impl Tui {
     /// This function is marked as unsafe because it requires exclusive access to the state.
     #[napi]
     pub async unsafe fn run(&mut self) -> Result<()> {
-        init_panic_hook();
-
         let state = Arc::clone(&self.state);
         tokio::spawn(async move {
             let mut state = state.lock().await;
@@ -157,7 +152,18 @@ impl Tui {
     }
 }
 
+#[cfg(feature = "platform-napi")]
+#[napi]
+pub fn restore_terminal() {
+    let mut stdout = stdout();
+    disable_raw_mode().unwrap();
+    execute!(stdout, LeaveAlternateScreen, DisableMouseCapture).unwrap();
+}
+
+#[cfg(not(feature = "platform-napi"))]
 pub fn init_panic_hook() {
+    use std::panic::{set_hook, take_hook};
+
     let original_hook = take_hook();
     set_hook(Box::new(move |panic_info| {
         let _ = disable_raw_mode();

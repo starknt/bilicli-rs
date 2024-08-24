@@ -1,4 +1,4 @@
-import { Tui, MsgType } from '@natmri/bilicli-napi'
+import { Tui, MsgType, restoreTerminal } from '@natmri/bilicli-napi'
 import { Message, MsgHandler, startListen } from 'blive-message-listener'
 import open from 'open'
 import { isAbsolute, join } from 'node:path'
@@ -98,7 +98,11 @@ export class App {
   }
 
   async run() {
-    await this.tui.run()
+    try {
+      await this.tui.run()
+    } catch {
+      restoreTerminal()
+    }
   }
 
   private mixTimestamp2Body(msg: Message<any>) {

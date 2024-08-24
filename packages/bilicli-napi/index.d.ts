@@ -15,6 +15,7 @@ export const enum MsgType {
   GuardBuy = 3,
   UserAction = 4
 }
+export declare function restoreTerminal(): void
 export declare class Tui {
   constructor(roomId: number, cookie?: string | undefined | null)
   get state(): Promise<AppState>
