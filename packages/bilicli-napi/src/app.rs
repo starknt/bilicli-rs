@@ -18,6 +18,7 @@ use ratatui::{
     style::palette::tailwind,
     widgets::{block::Title, Block, Borders, List, ListItem, Padding, Paragraph, Wrap},
 };
+use tokio::time::timeout;
 use tui_textarea::TextArea;
 
 pub const MAX_INPUT_LENGTH: usize = 40;
@@ -125,67 +126,57 @@ impl App {
     pub fn handle_events(&mut self, event: &Event, state: &mut TuiState) -> crate::app::Result<()> {
         if let Event::Key(key) = event {
             match self.input_mode {
-                InputMode::Normal => {
-                    if key.kind == KeyEventKind::Press {
-                        match key.code {
-                            KeyCode::Up if state.state == AppState::Running => self.previous_tab(),
-                            KeyCode::Down if state.state == AppState::Running => self.next_tab(),
-                            KeyCode::Char('w') if state.state == AppState::Running => {
-                                self.scroll_up()
-                            }
-                            KeyCode::Char('s') if state.state == AppState::Running => {
-                                self.scroll_down()
-                            }
-                            KeyCode::Char('q') if state.state == AppState::Running => state.quit(),
-                            KeyCode::Char('y') if state.state == AppState::Quitting => {
-                                state.state = AppState::Quit
-                            }
-                            KeyCode::Char('n') if state.state == AppState::Quitting => {
-                                state.state = AppState::Running;
-                            }
-                            KeyCode::Char('t') if state.state == AppState::Running => {
-                                self.toggle_slider_bar(state)
-                            }
-                            KeyCode::Enter
-                                if state.state == AppState::Running && state.cookie.is_some() =>
-                            {
-                                self.input_mode = InputMode::Editing;
-                                self.textarea
-                                    .set_style(Style::default().fg(Color::LightGreen));
-                            }
-                            _ => {}
+                InputMode::Normal if key.kind == KeyEventKind::Press => match key.code {
+                    KeyCode::Up if state.state == AppState::Running => self.previous_tab(),
+                    KeyCode::Down if state.state == AppState::Running => self.next_tab(),
+                    KeyCode::Char('w') if state.state == AppState::Running => self.scroll_up(),
+                    KeyCode::Char('s') if state.state == AppState::Running => self.scroll_down(),
+                    KeyCode::Char('q') if state.state == AppState::Running => state.quit(),
+                    KeyCode::Char('q') if state.state == AppState::Quitting => state.quit(),
+                    KeyCode::Char('y') if state.state == AppState::Quitting => {
+                        state.state = AppState::Quit
+                    }
+                    KeyCode::Char('n') if state.state == AppState::Quitting => {
+                        state.state = AppState::Running;
+                    }
+                    KeyCode::Char('t') if state.state == AppState::Running => {
+                        self.toggle_slider_bar(state)
+                    }
+                    KeyCode::Enter
+                        if state.state == AppState::Running && state.cookie.is_some() =>
+                    {
+                        self.input_mode = InputMode::Editing;
+                        self.textarea
+                            .set_style(Style::default().fg(Color::LightGreen));
+                    }
+                    _ => {}
+                },
+                InputMode::Editing if key.kind == KeyEventKind::Press => match key.code {
+                    KeyCode::Up => {
+                        self.previous_tab();
+                    }
+                    KeyCode::Down => {
+                        self.next_tab();
+                    }
+                    KeyCode::Enter => {
+                        if !self.textarea.lines()[0].is_empty() {
+                            self.will_send_message
+                                .push(self.textarea.lines()[0].to_string());
+                            self.input_mode = InputMode::Normal;
                         }
                     }
-                }
-                InputMode::Editing => {
-                    if key.kind == KeyEventKind::Press {
-                        match key.code {
-                            KeyCode::Up => {
-                                self.previous_tab();
-                            }
-                            KeyCode::Down => {
-                                self.next_tab();
-                            }
-                            KeyCode::Enter => {
-                                if !self.textarea.lines()[0].is_empty() {
-                                    self.will_send_message
-                                        .push(self.textarea.lines()[0].to_string());
-                                    self.input_mode = InputMode::Normal;
-                                }
-                            }
-                            KeyCode::Esc => {
-                                self.input_mode = InputMode::Normal;
-                            }
-                            _ => {
-                                if self.textarea.input(*key)
-                                    && self.textarea.lines()[0].len() > MAX_INPUT_LENGTH
-                                {
-                                    self.textarea.delete_char();
-                                }
-                            }
+                    KeyCode::Esc => {
+                        self.input_mode = InputMode::Normal;
+                    }
+                    _ => {
+                        if self.textarea.input(*key)
+                            && self.textarea.lines()[0].len() > MAX_INPUT_LENGTH
+                        {
+                            self.textarea.delete_char();
                         }
                     }
-                }
+                },
+                _ => {}
             }
         }
         Ok(())
