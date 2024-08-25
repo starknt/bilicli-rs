@@ -1,6 +1,6 @@
 {
   "name": "@natmri/bilicli-napi",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Node.js binding for Rust",
   "license": "MIT",
   "main": "index.js",

@@ -3,14 +3,13 @@
 use std::time::Duration;
 
 use crate::{
-    api::{get_room_by_user, send_danmu, WearedV2},
+    api::send_danmu,
     ui::{
-        footer::Footer, header::Header, helper::centered_rect, tabs::Tabs, AppState, Badge,
-        DanmuMsg, InputMode, MsgType, SliderBarState, User,
+        footer::Footer, header::Header, helper::centered_rect, tabs::Tabs, AppState, InputMode,
+        SliderBarState,
     },
     TuiState,
 };
-use chrono::Local;
 use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind};
 use futures::StreamExt;
 use ratatui::{
@@ -33,7 +32,6 @@ pub struct App {
     pub textarea: TextArea<'static>,
     pub will_send_message: Vec<String>,
     err_text: Option<String>,
-    weared_v2: Option<WearedV2>,
 }
 
 unsafe impl Send for App {}
@@ -84,39 +82,39 @@ impl App {
         .await
         .unwrap();
 
-        if self.weared_v2.is_none() {
-            let result = get_room_by_user(room_id).await;
-            if result.is_ok() {
-                self.weared_v2 = Some(result.unwrap().medal.curr_weared_v2);
-            }
-        }
+        // if self.weared_v2.is_none() {
+        //     let result = get_room_by_user(room_id).await;
+        //     if result.is_ok() {
+        //         self.weared_v2 = Some(result.unwrap().medal.curr_weared_v2);
+        //     }
+        // }
 
         if result.is_err() {
             self.err_text = Some(result.err().unwrap());
         } else {
-            let timestamp = Local::now().timestamp_millis();
-            let data = result.unwrap();
-            let mut user: User = User {
-                uid: data.mode_info.user.uid,
-                uname: data.mode_info.user.base.name,
-                face: None,
-                badge: None,
-                identity: None,
-            };
-            if let Some(weared_v2) = &self.weared_v2 {
-                user.badge = Some(Badge::new(
-                    weared_v2.name.clone(),
-                    weared_v2.level as u8,
-                    weared_v2.v2_medal_color_text.clone(),
-                    None,
-                    None,
-                    None,
-                ));
-            }
-            let msg = DanmuMsg::new(user, content, timestamp, false, None);
-            state
-                .messages
-                .push((MsgType::Danmu, serde_json::to_string(&msg).unwrap()));
+            // let timestamp = Local::now().timestamp_millis();
+            // let data = result.unwrap();
+            // let mut user: User = User {
+            //     uid: data.mode_info.user.uid,
+            //     uname: data.mode_info.user.base.name,
+            //     face: None,
+            //     badge: None,
+            //     identity: None,
+            // };
+            // if let Some(weared_v2) = &self.weared_v2 {
+            //     user.badge = Some(Badge::new(
+            //         weared_v2.name.clone(),
+            //         weared_v2.level as u8,
+            //         weared_v2.v2_medal_color_text.clone(),
+            //         None,
+            //         None,
+            //         None,
+            //     ));
+            // }
+            // let msg = DanmuMsg::new(user, content, timestamp, false, None);
+            // state
+            //     .messages
+            //     .push((MsgType::Danmu, serde_json::to_string(&msg).unwrap()));
         }
 
         Ok(())
