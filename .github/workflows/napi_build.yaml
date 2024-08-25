@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - master
     # paths:
     #   - 'packages/bilicli-napi/**'
     
@@ -185,11 +185,11 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 7.0.0
+          version: latest
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: latest
           check-latest: true
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
