@@ -1,6 +1,6 @@
 {
   "name": "@natmri/bilicli",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "Bilibili Danmu for terminal",
   "bin": {
     "bilicli": "./bin/cli.mjs"
@@ -23,7 +23,9 @@
   },
   "scripts": {
     "build": "unbuild",
-    "dev": "unbuild --watch"
+    "dev": "unbuild --watch",
+    "prepublish": "pnpm build",
+    "release": "npx bumpp --no-push --no-commit --no-tag && pnpm publish --no-git-checks"
   },
   "dependencies": {
     "@natmri/bilicli-napi": "workspace:*",
@@ -33,5 +35,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.4.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
