@@ -10,7 +10,7 @@ use crate::{
     },
     TuiState,
 };
-use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind};
+use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind, MouseEventKind};
 use futures::StreamExt;
 use ratatui::{
     prelude::*,
@@ -121,8 +121,8 @@ impl App {
     }
 
     pub fn handle_events(&mut self, event: &Event, state: &mut TuiState) -> crate::app::Result<()> {
-        if let Event::Key(key) = event {
-            match self.input_mode {
+        match event {
+            Event::Key(key) => match self.input_mode {
                 InputMode::Normal if key.kind == KeyEventKind::Press => match key.code {
                     KeyCode::Up if state.state == AppState::Running => self.previous_tab(),
                     KeyCode::Down if state.state == AppState::Running => self.next_tab(),
@@ -174,8 +174,19 @@ impl App {
                     }
                 },
                 _ => {}
-            }
+            },
+            Event::Mouse(mouse) => match mouse.kind {
+                MouseEventKind::ScrollDown => {
+                    self.scroll_down();
+                }
+                MouseEventKind::ScrollUp => {
+                    self.scroll_up();
+                }
+                _ => {}
+            },
+            _ => {}
         }
+
         Ok(())
     }
 

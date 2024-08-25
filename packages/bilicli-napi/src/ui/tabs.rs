@@ -18,12 +18,12 @@ use super::{
 
 #[derive(Clone)]
 pub enum Tab {
-    AllTab(u16, ScrollbarState),
-    DanMuTab(u16, ScrollbarState),
-    SCTab(u16, ScrollbarState),
-    GiftTab(u16, ScrollbarState),
-    CaptainTab(u16, ScrollbarState),
-    EnterTab(u16, ScrollbarState),
+    AllTab(usize, ScrollbarState),
+    DanMuTab(usize, ScrollbarState),
+    SCTab(usize, ScrollbarState),
+    GiftTab(usize, ScrollbarState),
+    CaptainTab(usize, ScrollbarState),
+    EnterTab(usize, ScrollbarState),
 }
 
 impl Tab {
@@ -40,27 +40,63 @@ impl Tab {
 
     pub fn scroll_up(&mut self) {
         match self {
-            Tab::AllTab(scroll, _) => *scroll = scroll.saturating_sub(1),
-            Tab::DanMuTab(scroll, _) => *scroll = scroll.saturating_sub(1),
-            Tab::SCTab(scroll, _) => *scroll = scroll.saturating_sub(1),
-            Tab::GiftTab(scroll, _) => *scroll = scroll.saturating_sub(1),
-            Tab::CaptainTab(scroll, _) => *scroll = scroll.saturating_sub(1),
-            Tab::EnterTab(scroll, _) => *scroll = scroll.saturating_sub(1),
-        }
+            Tab::AllTab(scroll, state) => {
+                *scroll = scroll.saturating_sub(1);
+                *state = state.position(*scroll);
+            }
+            Tab::DanMuTab(scroll, state) => {
+                *scroll = scroll.saturating_sub(1);
+                *state = state.position(*scroll);
+            }
+            Tab::SCTab(scroll, state) => {
+                *scroll = scroll.saturating_sub(1);
+                *state = state.position(*scroll);
+            }
+            Tab::GiftTab(scroll, state) => {
+                *scroll = scroll.saturating_sub(1);
+                *state = state.position(*scroll);
+            }
+            Tab::CaptainTab(scroll, state) => {
+                *scroll = scroll.saturating_sub(1);
+                *state = state.position(*scroll);
+            }
+            Tab::EnterTab(scroll, state) => {
+                *scroll = scroll.saturating_sub(1);
+                *state = state.position(*scroll);
+            }
+        };
     }
 
     pub fn scroll_down(&mut self) {
         match self {
-            Tab::AllTab(scroll, _) => *scroll = scroll.saturating_add(1),
-            Tab::DanMuTab(scroll, _) => *scroll = scroll.saturating_add(1),
-            Tab::SCTab(scroll, _) => *scroll = scroll.saturating_add(1),
-            Tab::GiftTab(scroll, _) => *scroll = scroll.saturating_add(1),
-            Tab::CaptainTab(scroll, _) => *scroll = scroll.saturating_add(1),
-            Tab::EnterTab(scroll, _) => *scroll = scroll.saturating_add(1),
-        }
+            Tab::AllTab(scroll, state) => {
+                *scroll = scroll.saturating_add(1);
+                *state = state.position(*scroll);
+            }
+            Tab::DanMuTab(scroll, state) => {
+                *scroll = scroll.saturating_add(1);
+                *state = state.position(*scroll);
+            }
+            Tab::SCTab(scroll, state) => {
+                *scroll = scroll.saturating_add(1);
+                *state = state.position(*scroll);
+            }
+            Tab::GiftTab(scroll, state) => {
+                *scroll = scroll.saturating_add(1);
+                *state = state.position(*scroll);
+            }
+            Tab::CaptainTab(scroll, state) => {
+                *scroll = scroll.saturating_add(1);
+                *state = state.position(*scroll);
+            }
+            Tab::EnterTab(scroll, state) => {
+                *scroll = scroll.saturating_add(1);
+                *state = state.position(*scroll);
+            }
+        };
     }
 
-    pub fn scroll(&self) -> u16 {
+    pub fn scroll(&self) -> usize {
         match self {
             Tab::AllTab(scroll, _) => *scroll,
             Tab::DanMuTab(scroll, _) => *scroll,
@@ -79,7 +115,7 @@ impl Tab {
             Tab::GiftTab(_, state) => *state = state.content_length(content_length),
             Tab::CaptainTab(_, state) => *state = state.content_length(content_length),
             Tab::EnterTab(_, state) => *state = state.content_length(content_length),
-        }
+        };
     }
 
     pub fn set_state_viewport_content_length(&mut self, viewport_content_length: usize) {
@@ -100,7 +136,7 @@ impl Tab {
             Tab::EnterTab(_, state) => {
                 *state = state.viewport_content_length(viewport_content_length)
             }
-        }
+        };
     }
 
     pub fn state(&mut self) -> &mut ScrollbarState {
@@ -132,7 +168,7 @@ impl StatefulWidget for &mut Tab {
 
 impl Tab {
     fn should_scroll_down(&mut self, content_length: usize, area: &Rect) -> bool {
-        self.scroll() + area.height - 2 < content_length as u16
+        self.scroll() + area.height as usize - 2 < content_length
     }
 
     fn should_scroll_up(&mut self, area: &Rect, content_length: usize) -> bool {
@@ -152,6 +188,13 @@ impl Tab {
             .padding(Padding::horizontal(1))
     }
 
+    fn setup_scrollbar(&mut self, len: usize, area: Rect) {
+        self.set_state_content_length(len);
+        while self.should_scroll_down(len, &area) {
+            self.scroll_down();
+        }
+    }
+
     fn render_all_tab(&mut self, area: Rect, buf: &mut Buffer, state: &mut TuiState) {
         let text: Vec<Line<'static>> = state
             .messages
@@ -160,25 +203,11 @@ impl Tab {
             .map(|(t, b)| Self::render_msg(*t, b.clone(), true))
             .collect();
 
-        let content_length = {
-            let len = text.len();
-
-            if len > area.height as usize {
-                len - area.height as usize
-            } else {
-                0
-            }
-        };
-
-        self.set_state_content_length(content_length);
-
-        while self.should_scroll_down(text.len(), &area) {
-            self.scroll_down();
-        }
+        self.setup_scrollbar(text.len(), area);
 
         Paragraph::new(text)
             .block(self.block(state))
-            .scroll((self.scroll(), 0))
+            .scroll((self.scroll() as u16, 0))
             .render(area, buf);
 
         let scrollbar = Scrollbar::new(ratatui::widgets::ScrollbarOrientation::VerticalRight)
@@ -196,25 +225,11 @@ impl Tab {
             .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
-        let content_length = {
-            let len = text.len();
-
-            if len > area.height as usize {
-                len - area.height as usize
-            } else {
-                0
-            }
-        };
-
-        self.set_state_content_length(content_length);
-
-        while self.should_scroll_down(text.len(), &area) {
-            self.scroll_down();
-        }
+        self.setup_scrollbar(text.len(), area);
 
         Paragraph::new(text)
             .block(self.block(state))
-            .scroll((self.scroll(), 0))
+            .scroll((self.scroll() as u16, 0))
             .render(area, buf);
 
         let scrollbar = Scrollbar::new(ratatui::widgets::ScrollbarOrientation::VerticalRight)
@@ -232,25 +247,11 @@ impl Tab {
             .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
-        let content_length = {
-            let len = text.len();
-
-            if len > area.height as usize {
-                len - area.height as usize
-            } else {
-                0
-            }
-        };
-
-        self.set_state_content_length(content_length);
-
-        while self.should_scroll_down(text.len(), &area) {
-            self.scroll_down();
-        }
+        self.setup_scrollbar(text.len(), area);
 
         Paragraph::new(text)
             .block(self.block(state))
-            .scroll((self.scroll(), 0))
+            .scroll((self.scroll() as u16, 0))
             .render(area, buf);
 
         let scrollbar = Scrollbar::new(ratatui::widgets::ScrollbarOrientation::VerticalRight)
@@ -268,25 +269,11 @@ impl Tab {
             .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
-        let content_length = {
-            let len = text.len();
-
-            if len > area.height as usize {
-                len - area.height as usize
-            } else {
-                0
-            }
-        };
-
-        self.set_state_content_length(content_length);
-
-        while self.should_scroll_down(text.len(), &area) {
-            self.scroll_down();
-        }
+        self.setup_scrollbar(text.len(), area);
 
         Paragraph::new(text)
             .block(self.block(state))
-            .scroll((self.scroll(), 0))
+            .scroll((self.scroll() as u16, 0))
             .render(area, buf);
 
         let scrollbar = Scrollbar::new(ratatui::widgets::ScrollbarOrientation::VerticalRight)
@@ -304,25 +291,11 @@ impl Tab {
             .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
-        let content_length = {
-            let len = text.len();
-
-            if len > area.height as usize {
-                len - area.height as usize
-            } else {
-                0
-            }
-        };
-
-        self.set_state_content_length(content_length);
-
-        while self.should_scroll_down(text.len(), &area) {
-            self.scroll_down();
-        }
+        self.setup_scrollbar(text.len(), area);
 
         Paragraph::new(text)
             .block(self.block(state))
-            .scroll((self.scroll(), 0))
+            .scroll((self.scroll() as u16, 0))
             .render(area, buf);
 
         let scrollbar = Scrollbar::new(ratatui::widgets::ScrollbarOrientation::VerticalRight)
@@ -340,25 +313,11 @@ impl Tab {
             .map(|(t, b)| Self::render_msg(*t, b.clone(), false))
             .collect();
 
-        let content_length = {
-            let len = text.len();
-
-            if len > area.height as usize {
-                len - area.height as usize
-            } else {
-                0
-            }
-        };
-
-        self.set_state_content_length(content_length);
-
-        while self.should_scroll_down(text.len(), &area) {
-            self.scroll_down();
-        }
+        self.setup_scrollbar(text.len(), area);
 
         Paragraph::new(text)
             .block(self.block(state))
-            .scroll((self.scroll(), 0))
+            .scroll((self.scroll() as u16, 0))
             .render(area, buf);
 
         let scrollbar = Scrollbar::new(ratatui::widgets::ScrollbarOrientation::VerticalRight)

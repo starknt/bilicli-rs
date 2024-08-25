@@ -103,7 +103,14 @@ impl StatefulWidget for &mut Footer {
                     .fg(Color::LightGreen)
                     .add_modifier(Modifier::BOLD),
                 Span::from("  "),
-                Span::from(format!("Live Time Duration {}", text)),
+                Span::from({
+                    let live_text = format!("直播时长: {}", text);
+                    if live_text.width() > info_area.width as usize {
+                        text
+                    } else {
+                        live_text
+                    }
+                }),
             ]))
             .block(
                 Block::bordered()

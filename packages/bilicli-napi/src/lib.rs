@@ -193,6 +193,7 @@ impl TuiState {
         Self {
             room_id,
             cookie,
+            slider_bar_state: SliderBarState::Hiding,
             ..Default::default()
         }
     }
