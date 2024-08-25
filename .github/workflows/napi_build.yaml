@@ -10,8 +10,8 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'packages/bilicli-napi/**'
+    # paths:
+    #   - 'packages/bilicli-napi/**'
     
 concurrency: 
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -47,7 +47,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
             setup: |
               sudo apt-get update
-              sudo apt-get install pkg-config libx11-dev
+              sudo apt-get install pkg-config libx11-dev libssl-dev
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
             build: |-
               set -e &&
@@ -73,7 +73,7 @@ jobs:
             target: aarch64-unknown-linux-gnu
             setup: |
               sudo apt-get update
-              sudo apt-get install pkg-config libx11-dev
+              sudo apt-get install pkg-config libx11-dev libssl-dev
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
             build: >-
               set -e &&
@@ -89,7 +89,7 @@ jobs:
             target: armv7-unknown-linux-gnueabihf
             setup: |
               sudo apt-get update
-              sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf -y
+              sudo apt-get install libssl-dev gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf -y
             build: |
               cd $APP_DIR
               pnpm build --target=armv7-unknown-linux-gnueabihf
@@ -117,7 +117,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 7.0.0
+          version: latest
       - name: Setup node
         uses: actions/setup-node@v3
         if: ${{ !matrix.settings.docker }}
@@ -131,9 +131,9 @@ jobs:
         uses: actions-rs/toolchain@v1
         if: ${{ !matrix.settings.docker }}
         with:
-          profile: minimal
+          toolchain: nightly
           override: true
-          toolchain: stable
+          components: rustfmt, clippy
           target: ${{ matrix.settings.target }}
       - name: Cache cargo
         uses: actions/cache@v3
