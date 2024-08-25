@@ -110,7 +110,7 @@ jobs:
             build: |
               cd $APP_DIR
               pnpm build --target aarch64-pc-windows-msvc
-    name: stable - ${{ matrix.settings.target }} - node@16
+    name: stable - ${{ matrix.settings.target }} - node@20
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v3
@@ -122,7 +122,7 @@ jobs:
         uses: actions/setup-node@v3
         if: ${{ !matrix.settings.docker }}
         with:
-          node-version: 16
+          node-version: latest
           check-latest: true
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
