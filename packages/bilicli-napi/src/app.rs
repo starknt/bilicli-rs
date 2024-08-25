@@ -18,7 +18,6 @@ use ratatui::{
     style::palette::tailwind,
     widgets::{block::Title, Block, Borders, List, ListItem, Padding, Paragraph, Wrap},
 };
-use tokio::time::timeout;
 use tui_textarea::TextArea;
 
 pub const MAX_INPUT_LENGTH: usize = 40;

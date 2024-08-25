@@ -31,7 +31,7 @@ pub fn replace_emoji_to_unicode(emoji_str: &str) -> String {
         .replace("[dog]", "🐶")
         .replace("[手机]", "📱")
         .replace("[花]", "🌹")
-        .replace("[吃瓜]", "")
+        .replace("[吃瓜]", "🍉")
         .replace("[比心]", "❤️")
 }
 
