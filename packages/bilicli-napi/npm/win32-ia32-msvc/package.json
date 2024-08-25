@@ -1,6 +1,6 @@
 {
   "name": "@natmri/bilicli-napi-win32-ia32-msvc",
-  "version": "0.0.8",
+  "version": "0.0.0",
   "os": [
     "win32"
   ],

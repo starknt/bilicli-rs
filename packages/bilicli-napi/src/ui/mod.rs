@@ -65,7 +65,7 @@ pub enum MsgType {
 pub enum MsgType {
     #[strum(to_string = "弹幕")]
     Danmu,
-    #[strum(to_string = "SC")]
+    #[strum(to_string = " SC ")]
     SuperChat,
     #[strum(to_string = "礼物")]
     Gift,
